@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const dayFilter = document.getElementById("dayFilter");
     const perPageSelect = document.getElementById("perPageSelect");
+    const mealFilter = document.getElementById("mealFilter");
+    const priceFilter = document.getElementById("priceFilter");
+    const tagFilter = document.getElementById("tagFilter");
     const geoToggleButton = document.getElementById("geoToggleButton");
     const geoStatus = document.getElementById("geoStatus");
     const mapDialog = document.getElementById("mapDialog");
@@ -32,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = new URL(window.location.href);
         if (dayFilter) url.searchParams.set("day", dayFilter.value);
         if (perPageSelect) url.searchParams.set("per_page", perPageSelect.value);
+        if (mealFilter) url.searchParams.set("meal", mealFilter.value);
+        if (priceFilter) url.searchParams.set("price", priceFilter.value);
+        if (tagFilter) url.searchParams.set("tag", tagFilter.value);
         url.searchParams.set("page", 1);
         window.location.href = url.toString();
     }
@@ -248,6 +254,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Page size change → reload page
     perPageSelect?.addEventListener("change", applyFilters);
+    mealFilter?.addEventListener("change", applyFilters);
+    priceFilter?.addEventListener("change", applyFilters);
+    tagFilter?.addEventListener("change", applyFilters);
 
     geoToggleButton?.addEventListener("click", async () => {
         const enable = geoToggleButton.getAttribute("aria-pressed") !== "true";
@@ -307,16 +316,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const dialog = document.getElementById("dealDialog");
     const form = document.getElementById("dealForm");
     const cancelBtn = document.getElementById("cancelDealBtn");
+    const dealStatus = document.getElementById("dealStatus");
 
     openButtons.forEach(button => {
         button.addEventListener("click", () => {
-            dialog.showModal();
-            form.reset();
+            dialog?.showModal();
+            form?.reset();
+            if (dealStatus) {
+                dealStatus.textContent = "";
+                dealStatus.className = "status-text";
+            }
         });
     });
 
     cancelBtn?.addEventListener("click", () => {
-        dialog.close();
+        dialog?.close();
     });
 
     form?.addEventListener("submit", async (e) => {
@@ -327,11 +341,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const email = document.getElementById("businessEmail").value;
         const deals = document.getElementById("businessDeals").value;
 
-        // Close immediately
-        dialog.close();
+        if (dealStatus) {
+            dealStatus.textContent = "Sending your deal...";
+            dealStatus.className = "status-text";
+        }
 
         try {
-            await fetch("/submit_deal", {
+            const response = await fetch("/submit_deal", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -341,8 +357,84 @@ document.addEventListener("DOMContentLoaded", () => {
                     deals
                 })
             });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || "Submission failed");
+            }
+            if (dealStatus) {
+                dealStatus.textContent = "Thanks. Your deal was sent for review.";
+                dealStatus.classList.add("success-text");
+            }
+            form.reset();
         } catch (err) {
             console.error("Submission failed:", err);
+            if (dealStatus) {
+                dealStatus.textContent = err.message || "Submission failed. Please try again.";
+                dealStatus.classList.add("error");
+            }
+        }
+    });
+
+    const correctionDialog = document.getElementById("correctionDialog");
+    const correctionForm = document.getElementById("correctionForm");
+    const correctionDealId = document.getElementById("correctionDealId");
+    const correctionCompany = document.getElementById("correctionCompany");
+    const correctionLocation = document.getElementById("correctionLocation");
+    const correctionMessage = document.getElementById("correctionMessage");
+    const correctionStatus = document.getElementById("correctionStatus");
+    const cancelCorrectionBtn = document.getElementById("cancelCorrectionBtn");
+
+    document.querySelectorAll(".correction-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            if (correctionDealId) correctionDealId.value = button.dataset.id || "";
+            if (correctionCompany) correctionCompany.value = button.dataset.company || "";
+            if (correctionLocation) correctionLocation.value = button.dataset.location || "";
+            if (correctionMessage) correctionMessage.value = "";
+            if (correctionStatus) {
+                correctionStatus.textContent = "";
+                correctionStatus.className = "status-text";
+            }
+            correctionDialog?.showModal();
+        });
+    });
+
+    cancelCorrectionBtn?.addEventListener("click", () => {
+        correctionDialog?.close();
+    });
+
+    correctionForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (correctionStatus) {
+            correctionStatus.textContent = "Sending your fix...";
+            correctionStatus.className = "status-text";
+        }
+
+        try {
+            const response = await fetch("/suggest_correction", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    deal_id: correctionDealId?.value || "",
+                    company: correctionCompany?.value || "",
+                    location: correctionLocation?.value || "",
+                    message: correctionMessage?.value || ""
+                })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || "Could not send the fix");
+            }
+            if (correctionStatus) {
+                correctionStatus.textContent = "Thanks. We will check it.";
+                correctionStatus.classList.add("success-text");
+            }
+            correctionForm.reset();
+        } catch (error) {
+            if (correctionStatus) {
+                correctionStatus.textContent = error.message || "Could not send the fix.";
+                correctionStatus.classList.add("error");
+            }
         }
     });
 

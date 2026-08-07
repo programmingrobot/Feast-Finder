@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
-import os, json, uuid
+import os, json, re, uuid
 from datetime import datetime, timedelta
 from functools import wraps
 import logging
@@ -29,6 +29,9 @@ DEALS_FILE = os.path.join(DATA_DIR, "deals.json")
 MESSAGES_FILE = os.path.join(DATA_DIR, "messages.json")
 GEOCODE_CACHE_FILE = os.path.join(DATA_DIR, "geocode_cache.json")
 PASSWORD_FILE = os.path.join(BASE_DIR, "password.txt")
+SITE_URL = os.environ.get("SITE_URL", "https://github.com/programmingrobot/Feast-Finder")
+DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+SECTIONS = ["General", "Breakfast", "Lunch", "Dinner"]
 
 # -----------------------------
 # INIT FILES
@@ -168,6 +171,164 @@ def calculate_distance_km(lat1, lon1, lat2, lon2):
     c_value = 2 * asin(sqrt(a_value))
     return earth_radius_km * c_value
 
+def get_today_name():
+    return datetime.now().strftime("%A")
+
+def get_today_stamp():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def extract_lowest_price(text):
+    prices = re.findall(r"\$\s*(\d+(?:\.\d{1,2})?)", text or "")
+    if not prices:
+        return None
+    return min(float(price) for price in prices)
+
+def format_price(price):
+    if price is None:
+        return ""
+    if price.is_integer():
+        return f"${int(price)}"
+    return f"${price:.2f}"
+
+def normalize_deal_type(raw_type):
+    deal_type = (raw_type or "").strip().capitalize()
+    return deal_type if deal_type in SECTIONS else "General"
+
+def deal_matches_filters(deal, company, location, meal_filter, price_filter, tag_filter, search_query):
+    description = deal.get("text", "")
+    deal_type = normalize_deal_type(deal.get("type", ""))
+    haystack = f"{description} {company} {location}".lower()
+
+    if meal_filter != "All" and deal_type != meal_filter:
+        return False
+
+    lowest_price = extract_lowest_price(description)
+    if price_filter == "under15" and (lowest_price is None or lowest_price > 15):
+        return False
+
+    if tag_filter == "kids" and "kid" not in haystack:
+        return False
+
+    if search_query and search_query.lower() not in haystack:
+        return False
+
+    return True
+
+def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag_filter, search_query):
+    grouped_results = {section: [] for section in SECTIONS}
+    data_changed = False
+
+    for company in sorted(deals_data.keys(), key=lambda x: (x or "").lower()):
+        info = deals_data[company]
+        location = info.get("Details", {}).get("location", "")
+
+        for deal in sorted(info.get("Deals", []), key=lambda d: (d.get("text") or "").lower()):
+            if "id" not in deal:
+                deal["id"] = str(uuid.uuid4())
+                data_changed = True
+
+            if selected_day not in deal.get("days", []):
+                continue
+
+            if not deal_matches_filters(deal, company, location, meal_filter, price_filter, tag_filter, search_query):
+                continue
+
+            lowest_price = extract_lowest_price(deal.get("text", ""))
+            deal_type = normalize_deal_type(deal.get("type", ""))
+            grouped_results[deal_type].append({
+                "id": deal["id"],
+                "company": company,
+                "description": deal.get("text", ""),
+                "location": location,
+                "type": deal_type,
+                "days": deal.get("days", []),
+                "price": format_price(lowest_price),
+                "updated_at": deal.get("updated_at", "Current listing")
+            })
+
+    if data_changed:
+        save_deals(deals_data)
+
+    return grouped_results
+
+def render_deals(default_meal="All", default_tag="", default_q="", page_title="Latrobe Valley Food Deals", meta_description=None):
+    deals_data = load_deals()
+    today = get_today_name()
+    selected_day = request.args.get("day", today)
+
+    if selected_day == "Today" or selected_day not in DAYS_ORDER:
+        selected_day = today
+
+    meal_filter = request.args.get("meal", default_meal)
+    if meal_filter not in ["All"] + SECTIONS:
+        meal_filter = "All"
+
+    price_filter = request.args.get("price", "")
+    if price_filter not in ["", "under15"]:
+        price_filter = ""
+
+    tag_filter = request.args.get("tag", default_tag)
+    if tag_filter not in ["", "kids"]:
+        tag_filter = ""
+
+    search_query = request.args.get("q", default_q).strip()
+
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    if per_page not in [10, 20, 50, 100, 200]:
+        per_page = 10
+
+    grouped_results = build_grouped_deals(
+        deals_data,
+        selected_day,
+        meal_filter,
+        price_filter,
+        tag_filter,
+        search_query
+    )
+
+    total_deals = sum(len(deals) for deals in grouped_results.values())
+    active_businesses = len({
+        deal["company"]
+        for deals in grouped_results.values()
+        for deal in deals
+    })
+
+    paginated_results = {}
+    total_pages_per_section = {}
+
+    for section, deals in grouped_results.items():
+        total = len(deals)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        total_pages_per_section[section] = total_pages
+
+        current_page = max(1, min(page, total_pages))
+        start = (current_page - 1) * per_page
+        end = start + per_page
+        paginated_results[section] = deals[start:end]
+
+    return render_template(
+        "index.html",
+        grouped_results=paginated_results,
+        selected_day=selected_day,
+        today_real=today,
+        days_order=DAYS_ORDER,
+        sections=SECTIONS,
+        meal_filter=meal_filter,
+        price_filter=price_filter,
+        tag_filter=tag_filter,
+        search_query=search_query,
+        total_deals=total_deals,
+        active_businesses=active_businesses,
+        page=page,
+        per_page=per_page,
+        total_pages_per_section=total_pages_per_section,
+        max_pages=max(total_pages_per_section.values()),
+        page_title=page_title,
+        meta_description=meta_description or "Find cheap food deals in Traralgon and the Latrobe Valley. Browse today's lunch, dinner, breakfast, and family meal specials near you.",
+        site_url=SITE_URL
+    )
+
 def admin_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
@@ -195,82 +356,31 @@ def block_bots(view):
 # -----------------------------
 @app.route("/")
 def home():
-    deals_data = load_deals()
+    return render_deals()
 
-    today = datetime.now().strftime("%A")
-    selected_day = request.args.get("day", today)
+@app.route("/traralgon-lunch-deals")
+def traralgon_lunch_deals():
+    return render_deals(
+        default_meal="Lunch",
+        default_q="Traralgon",
+        page_title="Traralgon Lunch Deals",
+        meta_description="Find lunch specials and cheap eats in Traralgon and nearby Latrobe Valley towns."
+    )
 
-    # Fix if the query passed "Today"
-    if selected_day == "Today":
-        selected_day = today
+@app.route("/morwell-food-deals")
+def morwell_food_deals():
+    return render_deals(
+        default_q="Morwell",
+        page_title="Morwell Food Deals",
+        meta_description="Browse affordable food deals and meal specials around Morwell and the Latrobe Valley."
+    )
 
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
-    if per_page not in [10, 20, 50, 100, 200]:
-        per_page = 10
-
-    grouped_results = {
-        "General": [],
-        "Breakfast": [],
-        "Lunch": [],
-        "Dinner": []
-    }
-
-    # Build grouped lists
-    for company in sorted(deals_data.keys(), key=lambda x: (x or "").lower()):
-        info = deals_data[company]
-        location = info.get("Details", {}).get("location", "")
-
-        for deal in sorted(info.get("Deals", []), key=lambda d: (d.get("text") or "").lower()):
-            # Assign ID if missing
-            if "id" not in deal:
-                deal["id"] = str(uuid.uuid4())
-
-            if selected_day not in deal.get("days", []):
-                continue
-
-            deal_type = deal.get("type", "").strip().capitalize()
-            if deal_type not in grouped_results:
-                deal_type = "General"
-
-            grouped_results[deal_type].append({
-                "id": deal["id"],
-                "company": company,
-                "description": deal.get("text", ""),
-                "location": location
-            })
-
-    # Save back any missing IDs
-    save_deals(deals_data)
-
-    # Per-category pagination
-    paginated_results = {}
-    total_pages_per_section = {}
-
-    for section, deals in grouped_results.items():
-        total = len(deals)
-        total_pages = max((total + per_page - 1) // per_page, 1)
-        total_pages_per_section[section] = total_pages
-
-        if page < 1:
-            page = 1
-        elif page > total_pages:
-            page = total_pages
-
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_results[section] = deals[start:end]
-
-    return render_template(
-        "index.html",
-        grouped_results=paginated_results,
-        selected_day=selected_day,
-        today_real=today,
-        days_order=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-        page=page,
-        per_page=per_page,
-        total_pages_per_section=total_pages_per_section,
-        max_pages=max(total_pages_per_section.values())  # added for template safety
+@app.route("/kids-eat-free-latrobe-valley")
+def kids_eat_free_latrobe_valley():
+    return render_deals(
+        default_tag="kids",
+        page_title="Kids Eat Free Latrobe Valley",
+        meta_description="Find family food deals and kids eat free specials around Traralgon, Morwell, and the Latrobe Valley."
     )
 
 @app.route("/submit_deal", methods=["POST"])
@@ -288,6 +398,26 @@ def submit_deal():
         "deals": data["deals"].strip(),
         "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "approved": False
+    })
+    save_messages(messages)
+    return jsonify(success=True)
+
+@app.route("/suggest_correction", methods=["POST"])
+def suggest_correction():
+    data = request.get_json(silent=True) or {}
+    if not all(data.get(k) for k in ("deal_id", "message")):
+        return jsonify(success=False, error="Tell us what needs fixing"), 400
+
+    messages = load_messages()
+    messages.append({
+        "id": str(uuid.uuid4()),
+        "business_name": data.get("company", "Deal correction").strip(),
+        "business_address": data.get("location", "").strip(),
+        "business_email": data.get("email", "correction@visitor.local").strip(),
+        "deals": f"Correction for deal {data['deal_id']}: {data['message'].strip()}",
+        "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "approved": False,
+        "type": "correction"
     })
     save_messages(messages)
     return jsonify(success=True)
@@ -499,7 +629,8 @@ def add_deal():
         "id": str(uuid.uuid4()),
         "text": text,
         "type": deal_type,
-        "days": days
+        "days": days,
+        "updated_at": get_today_stamp()
     }
 
     deals[supplier]["Deals"].append(new_deal)
@@ -531,6 +662,7 @@ def edit_deal():
             deal["text"] = new_deal
             deal["type"] = deal_type
             deal["days"] = days
+            deal["updated_at"] = get_today_stamp()
             save_deals(deals)
             return jsonify(success=True)
 

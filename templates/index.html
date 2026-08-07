@@ -4,10 +4,10 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<title>Latrobe Valley Deals</title>
+	<title>{{ page_title }}</title>
 
 	<!-- SEO Meta -->
-	<meta name="description" content="Find cheap food deals in Traralgon and the Latrobe Valley. Discover discounts, specials, and affordable meals near you.">
+	<meta name="description" content="{{ meta_description }}">
 
 	<meta name="keywords" content="Latrobe Valley food deals, Traralgon cheap eats, cheap meals Latrobe Valley, discount restaurants Traralgon, affordable food Latrobe, Traralgon lunch specials, Traralgon dinner deals, Victoria food deals, cheap takeaway Traralgon, restaurant discounts Latrobe Valley, budget meals Traralgon, meal deals Latrobe, Traralgon cafes offers, food promotions Latrobe Valley, cheap fast food Traralgon, specials near me Latrobe Valley, discounted meals Traralgon, travel eats Latrobe, food deals Victoria, eat cheap Traralgon, daily food specials Latrobe Valley, Traralgon restaurants cheap, food bargains Latrobe">
 
@@ -16,16 +16,16 @@
 	<meta http-equiv="content-language" content="en">
 
 	<!-- Open Graph -->
-	<meta property="og:title" content="Latrobe Valley Food Deals">
-	<meta property="og:description" content="Discover cheap food deals in Traralgon and the Latrobe Valley. Find discounts, specials, and affordable meals near you.">
+	<meta property="og:title" content="{{ page_title }}">
+	<meta property="og:description" content="{{ meta_description }}">
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="https://www.yourdomain.com/">
+	<meta property="og:url" content="{{ site_url }}{{ request.path }}">
 	<meta property="og:image" content="{{ url_for('static', filename='logo.png') }}">
 
 	<!-- Twitter Card -->
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Latrobe Valley Food Deals">
-	<meta name="twitter:description" content="Find the best cheap eats in Latrobe Valley.">
+	<meta name="twitter:title" content="{{ page_title }}">
+	<meta name="twitter:description" content="{{ meta_description }}">
 	<meta name="twitter:image" content="{{ url_for('static', filename='logo.png') }}">
 
 	<!-- Styles & Icon -->
@@ -36,6 +36,10 @@
 
 <header>
 	<img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+	<div class="header-copy">
+		<h1>Today's Food Deals</h1>
+		<p>Cheap eats around Traralgon and the Latrobe Valley</p>
+	</div>
 
 	<div class="header-buttons">
 		<a href="{{ url_for('about_us') }}" class="info-btn" title="See the About Us page">
@@ -45,8 +49,72 @@
 </header>
 
 	<main class="deals-container" id="dealsContainer">
+		<section class="hero-intro">
+			<h1>{{ selected_day }} food deals near you</h1>
+			<p>
+				<strong>{{ total_deals }}</strong> deal{% if total_deals != 1 %}s{% endif %}
+				from <strong>{{ active_businesses }}</strong> business{% if active_businesses != 1 %}es{% endif %}
+			</p>
 
-		{% set sections = ["General", "Breakfast", "Lunch", "Dinner"] %}
+			<form class="search-panel" method="get" action="{{ request.path }}">
+				<input type="search" name="q" value="{{ search_query }}" placeholder="Search parma, pizza, kids, cafe...">
+
+				<div class="filter-row">
+					<label>
+						<span>Day</span>
+						<select id="dayFilter" name="day">
+							{% for d in days_order %}
+								<option value="{{ d }}" {% if d == selected_day %}selected{% endif %}>
+									{{ "Today" if d == today_real else d }}
+								</option>
+							{% endfor %}
+						</select>
+					</label>
+
+					<label>
+						<span>Meal</span>
+						<select id="mealFilter" name="meal">
+							<option value="All" {% if meal_filter == "All" %}selected{% endif %}>All meals</option>
+							{% for section in sections %}
+								<option value="{{ section }}" {% if meal_filter == section %}selected{% endif %}>{{ section }}</option>
+							{% endfor %}
+						</select>
+					</label>
+
+					<label>
+						<span>Price</span>
+						<select id="priceFilter" name="price">
+							<option value="" {% if not price_filter %}selected{% endif %}>Any price</option>
+							<option value="under15" {% if price_filter == "under15" %}selected{% endif %}>$15 and under</option>
+						</select>
+					</label>
+
+					<label>
+						<span>Type</span>
+						<select id="tagFilter" name="tag">
+							<option value="" {% if not tag_filter %}selected{% endif %}>All deals</option>
+							<option value="kids" {% if tag_filter == "kids" %}selected{% endif %}>Kids deals</option>
+						</select>
+					</label>
+
+					<label>
+						<span>Show</span>
+						<select id="perPageSelect" name="per_page">
+							<option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+							<option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+							<option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+							<option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+							<option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="quick-actions">
+					<button type="submit" class="btn">Find Deals</button>
+					<a class="btn secondary-btn" href="{{ request.path }}">Clear</a>
+				</div>
+			</form>
+		</section>
 
 		<div id="dealSectionsContainer">
 			{% for section in sections %}
@@ -60,21 +128,39 @@
 						{% for deal in section_deals %}
 							<div class="deal-entry" data-location="{{ deal.location or '' }}" data-original-index="{{ loop.index0 }}">
 								<div class="deal-card">
-									<p class="deal-description">{{ deal.description }}</p>
-									<p class="deal-meta">
-										{{ deal.company }}
+									<div class="deal-card-top">
+										<span class="meal-badge">{{ deal.type }}</span>
+										<span class="updated-badge">{{ "Updated " ~ deal.updated_at if deal.updated_at != "Current listing" else "Current listing" }}</span>
+									</div>
+									<h3 class="deal-description">{{ deal.description }}</h3>
+									<div class="deal-meta">
+										<strong>{{ deal.company }}</strong>
+										{% if deal.price %}
+											<span class="price-badge">{{ deal.price }}</span>
+										{% endif %}
+										<span>{{ deal.days | join(", ") }}</span>
 										{% if deal.location %}
-											— <span class="deal-location">{{ deal.location }}</span>
+											<span class="deal-location">{{ deal.location }}</span>
 											<span class="deal-distance" hidden></span>
+										{% endif %}
+									</div>
+									<div class="deal-actions">
+										{% if deal.location %}
 											<button type="button"
 													class="map-open-btn"
 													data-location="{{ deal.location }}">
 												Show on Maps
 											</button>
 										{% endif %}
-									</p>
+										<button type="button"
+												class="correction-btn"
+												data-id="{{ deal.id }}"
+												data-company="{{ deal.company }}"
+												data-location="{{ deal.location }}">
+											Suggest a Fix
+										</button>
+									</div>
 								</div>
-								<hr>
 							</div>
 						{% endfor %}
 					</div>
@@ -84,6 +170,13 @@
 			{% endfor %}
 		</div>
 
+		{% if total_deals == 0 %}
+			<section class="empty-state">
+				<h2>No deals found</h2>
+				<p>Try another day, clear the filters, or send us a deal you know about.</p>
+			</section>
+		{% endif %}
+
 		<!-- Add deal button -->
 		<button class="btn" id="openDealModal">
 		Are you a business? Add your deals here.
@@ -91,7 +184,7 @@
 
 </main>
 
-	<div class="filter-bar">
+		<div class="filter-bar">
 
 			<button class="btn" id="openDealModalBottom">Request Deals</button>
 			<div class="geo-controls">
@@ -100,32 +193,16 @@
 			</div>
 			<span id="geoStatus" class="geo-status" aria-live="polite"></span>
 
-			<select id="dayFilter">
-		{% for d in days_order %}
-			<option value="{{ d }}" {% if d == selected_day %}selected{% endif %}>
-				{{ "Today" if d == today_real else d }}
-			</option>
-		{% endfor %}
-	</select>
-
-	<select id="perPageSelect">
-		<option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
-		<option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
-		<option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
-		<option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
-		<option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
-	</select>
-
 	<div class="pagination-controls">
 		{% if page > 1 %}
-			<a class="page-btn" href="/?day={{ selected_day }}&page={{ page - 1 }}&per_page={{ per_page }}">⬅</a>
+			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page - 1 }}&per_page={{ per_page }}">Prev</a>
 		{% endif %}
 
 		<span>Page {{ page }}</span>
 
 		{% set max_pages = total_pages_per_section.values() | max %}
 		{% if page < max_pages %}
-			<a class="page-btn" href="/?day={{ selected_day }}&page={{ page + 1 }}&per_page={{ per_page }}">➡</a>
+			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page + 1 }}&per_page={{ per_page }}">Next</a>
 		{% endif %}
 	</div>
 
@@ -156,6 +233,24 @@
 				<button type="button" class="btn logout-btn" id="closeMapDialog">Close</button>
 			</div>
 		</div>
+</dialog>
+
+<dialog id="correctionDialog">
+	<form id="correctionForm">
+		<h3>Suggest a Fix</h3>
+		<input type="hidden" id="correctionDealId">
+		<input type="hidden" id="correctionCompany">
+		<input type="hidden" id="correctionLocation">
+		<textarea id="correctionMessage"
+				  placeholder="Tell us what changed, such as the price, days, location, or if the deal has ended."
+				  rows="5"
+				  required></textarea>
+		<div>
+			<button type="submit" class="btn">Send Fix</button>
+			<button type="button" class="btn logout-btn" id="cancelCorrectionBtn">Cancel</button>
+		</div>
+		<p id="correctionStatus" class="status-text"></p>
+	</form>
 </dialog>
 
 <!-- DEAL SUBMISSION MODAL -->

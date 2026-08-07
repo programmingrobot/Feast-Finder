@@ -79,7 +79,7 @@
                         <div class="deal-text">
                             <strong>{{ deal.type }}</strong> — {{ deal.text }}
                             <br>
-                            <small>{{ deal.days | join(', ') }}</small>
+                            <small>{{ deal.days | join(', ') }}{% if deal.updated_at %} · Updated {{ deal.updated_at }}{% endif %}</small>
                         </div>
 
                         <div class="deal-actions">
