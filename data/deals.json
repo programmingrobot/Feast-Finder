@@ -1,0 +1,227 @@
+{
+  "Royal Exchange Hotel": {
+    "Details": {
+      "location": "64 Princes Hwy, Traralgon VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "1",
+        "text": "Bistro - Parma Night, $25",
+        "days": [
+          "Wednesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "2",
+        "text": "Bistro - Kids Eat Free (a adult meal per free child meal)",
+        "days": [
+          "Saturday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "3",
+        "text": "Bar - Pot and Parma, $15",
+        "days": [
+          "Wednesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "4",
+        "text": "Bar - Burger and Pot, $15",
+        "days": [
+          "Thursday"
+        ],
+        "type": "Dinner"
+      }
+    ]
+  },
+  "Hotel Traralgon": {
+    "Details": {
+      "location": "171 Franklin St, Traralgon, VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "5",
+        "text": "Kids Eat Free (lunch and dinner) - 1 adult meal per free child meal",
+        "days": [
+          "Tuesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "6",
+        "text": "Parma Night - $22",
+        "days": [
+          "Wednesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "7",
+        "text": "Louisiana Pork Ribs - $22",
+        "days": [
+          "Thursday"
+        ],
+        "type": "Dinner"
+      }
+    ]
+  },
+  "Shaky Spear Milk Bar": {
+    "Details": {
+      "location": "26 Shakespeare St, Traralgon VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "8",
+        "text": "Pie and drink for $10",
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "type": "Dinner"
+      }
+    ]
+  },
+  "Bowling Club": {
+    "Details": {
+      "location": "98 Kay Street, Traralgon VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "9",
+        "text": "Parma Night",
+        "days": [
+          "Wednesday"
+        ],
+        "type": "Dinner"
+      }
+    ]
+  },
+  "Hogs Breath Cafe": {
+    "Details": {
+      "location": "128 Argyle St, Traralgon VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "10",
+        "text": "Lunchtime special, $16.90.  Choose from Beer battered Barramundi, Southern-fried Chicken Wrap, Grilled Chicken Burger, Chicken Schnitzel, Nachos, Mexican Pulled Beef Quesadilla.  Add a salad for $4.",
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "type": "Lunch"
+      }
+    ]
+  },
+  "Glengarry Hotel & Pub": {
+    "Details": {
+      "location": "25 Main St, Glengarry VIC 3854"
+    },
+    "Deals": [
+      {
+        "id": "11",
+        "text": "Parma Night, $21",
+        "days": [
+          "Wednesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "12",
+        "text": "Kids eat free.  1 adult meal per free kid.",
+        "days": [
+          "Thursday"
+        ],
+        "type": "General"
+      },
+      {
+        "id": "13",
+        "text": "Steak Night, $35.",
+        "days": [
+          "Friday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "14",
+        "text": "Shout Your Mate a Parma.  Buy 1 get one free.",
+        "days": [
+          "Sunday"
+        ],
+        "type": "General"
+      }
+    ]
+  },
+  "Dan Bakery and Cafe": {
+    "Details": {
+      "location": "68 Hotham St, Traralgon VIC 3844"
+    },
+    "Deals": [
+      {
+        "id": "15",
+        "text": "Crispy Pork Bahn Mi, $11 (10:00 -14:30)",
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "type": "Lunch"
+      }
+    ]
+  },
+  "Morwell RSL": {
+    "Details": {
+      "location": "52 Elgin St, Morwell VIC 3840"
+    },
+    "Deals": [
+      {
+        "id": "16",
+        "text": "Fish & Chips",
+        "days": [
+          "Monday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "17",
+        "text": "Parma Night, $25 including free beer, wine or soda.",
+        "days": [
+          "Tuesday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "18",
+        "text": "Family Night, $65.  2 Main meals, 2 Kids meals, Garlic Bread and jug of soda.",
+        "days": [
+          "Thursday"
+        ],
+        "type": "Dinner"
+      },
+      {
+        "id": "19",
+        "text": "Steak Night",
+        "days": [
+          "Saturday"
+        ],
+        "type": "Dinner"
+      }
+    ]
+  }
+}

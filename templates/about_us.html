@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About Us</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JDDMXKGDF3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JDDMXKGDF3');
+    </script>
+
+    <style>
+        /* ==========================
+           BASE
+        ========================== */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: #f2f2f2;
+            color: #121212;
+            line-height: 1.6;
+        }
+
+        /* ==========================
+           HEADER
+        ========================== */
+        header {
+            background: linear-gradient(135deg, #7b0000, #b30000);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+
+        header h1 {
+            margin: 0;
+            font-family: "Titan One", system-ui, sans-serif;
+            font-size: 2rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+        }
+
+        /* ==========================
+           BACK BUTTON
+        ========================== */
+        .back-btn {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #6b7280;
+            color: white;
+            text-decoration: none;
+            padding: 0.35rem 1rem;
+            border-radius: 0.6rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            transition: background-color 0.15s ease;
+        }
+
+        .back-btn:hover {
+            background: #4b5563;
+        }
+
+        /* ==========================
+           ABOUT CONTAINER
+        ========================== */
+        .about-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+		.about-container img {
+			width: 25%;
+			max-width: 160px;
+			border-radius: 50%;
+			float: right;
+			margin: 0 0 1rem 1.5rem;
+			box-shadow: 0 8px 22px rgba(0,0,0,0.15);
+			border: 5px solid #ff7a18; /* orange outline */
+		}
+
+        .about-container p {
+            font-size: 1.05rem;
+            margin-bottom: 1.1rem;
+        }
+
+        /* ==========================
+           RESPONSIVE
+        ========================== */
+        @media (max-width: 768px) {
+            .about-container img {
+                width: 35%;
+                float: none;
+                display: block;
+                margin: 0 auto 1.5rem;
+            }
+
+            .about-container {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="/" class="back-btn">Back</a>
+    <h1>About Us</h1>
+</header>
+
+<main class="about-container">
+    <img src="{{ url_for('static', filename='me.jpg') }}" alt="Photo of Jack">
+
+    <p>Hi</p>
+
+    <p>
+        I built this app because I wanted to help people in my town find good deals on food.
+        Sometimes it is hard to know where to go for a cheap and yummy lunch, so my app lists
+        great deals in Traralgon to make it fast and easy for everyone.
+    </p>
+
+    <p>
+        My name is Jack and I am 9 years old. I live in Traralgon and I love tech, science and
+        coding. I think it is really fun to learn how things work and how to create new things
+        using computers.
+    </p>
+
+    <p>
+        I love coding and that is a big reason why I made this app. I wanted a project I could
+        launch in my town and share with people. I think coding is creative and exciting because
+        you can make nearly anything you can imagine. I wrote this app using Python.
+    </p>
+
+    <p>
+        I hope this project inspires other kids to get into coding. If I can build an app in
+        primary school then other kids can too. I want everyone to know that coding is not just
+        for grown ups and it is really fun.
+    </p>
+
+    <p><strong>Enjoy</strong></p>
+</main>
+
+</body>
+</html>

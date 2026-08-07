@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .login-box {
+            max-width: 400px;
+            margin: 120px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            background: darkred;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .error {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #d62828;
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h1>Admin Login</h1>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+        <input type="password" name="password" placeholder="Enter password" required>
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+</body>
+</html>

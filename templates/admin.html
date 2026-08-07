@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <script defer src="{{ url_for('static', filename='admin.js') }}"></script>
+</head>
+<body>
+
+<header class="admin-header">
+	<h1>Admin Panel</h1>
+
+	<div class="admin-actions">
+		<a href="{{ url_for('change_password') }}">
+			<button class="admin-btn">Change Password</button>
+		</a>
+
+		<a href="{{ url_for('logout') }}">
+			<button class="logout-btn">Logout</button>
+		</a>
+	</div>
+</header>
+
+<div class="admin-container">
+
+    <!-- LEFT: MESSAGES -->
+    <aside class="messages-panel">
+        <h2>Messages</h2>
+        <div class="messages-list">
+            {% for msg in messages %}
+            <div class="message-card">
+                <div class="message-header">
+                    <strong>{{ msg.business_name }}</strong>
+                    <span class="timestamp">{{ msg.submitted_at }}</span>
+                    <button class="delete-message-btn" data-id="{{ msg.id }}">Delete</button>
+                </div>
+                <p><strong>Email:</strong> {{ msg.business_email }}</p>
+                <p><strong>Address:</strong> {{ msg.business_address }}</p>
+                <p><strong>Deals:</strong><br>{{ msg.deals }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <!-- RIGHT: MAIN -->
+    <main class="admin-main">
+
+        <div class="admin-actions">
+            <button id="openCompanyModal">Add Company</button>
+        </div>
+
+        <div class="suppliers-container">
+            {% for company, data in companies.items() %}
+            <div class="supplier-card" data-company="{{ company }}">
+
+                <h3>{{ company }}</h3>
+                <p class="location">{{ data.Details.location }}</p>
+
+                <div class="company-actions">
+                    <button class="add-deal-btn" data-supplier="{{ company }}">Add Deal</button>
+                    <button class="edit-company-btn"
+                            data-supplier="{{ company }}"
+                            data-location="{{ data.Details.location }}">Edit Company</button>
+                    <button class="delete-company-btn cancel" data-supplier="{{ company }}">Delete Company</button>
+                </div>
+
+                <div class="deals-list">
+                    {% for deal in data.Deals %}
+                    <div class="deal-row"
+                         data-id="{{ deal.id }}"
+                         data-supplier="{{ company }}"
+                         data-deal="{{ deal.text | e }}"
+                         data-type="{{ deal.type }}"
+                         data-days='{{ deal.days | tojson | safe }}'>
+
+                        <div class="deal-text">
+                            <strong>{{ deal.type }}</strong> — {{ deal.text }}
+                            <br>
+                            <small>{{ deal.days | join(', ') }}</small>
+                        </div>
+
+                        <div class="deal-actions">
+                            <button class="edit-deal-btn">Edit Deal</button>
+                            <button class="delete-deal-btn cancel">Delete Deal</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+    </main>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- ADD COMPANY -->
+<dialog id="companyModal" class="modal">
+    <h3>Add Company</h3>
+    <input id="companyName" placeholder="Company name" required>
+    <input id="companyLocation" placeholder="Location" required>
+    <div class="modal-actions">
+        <button id="addCompanyBtn">Add</button>
+        <button class="cancel">Cancel</button>
+    </div>
+</dialog>
+
+<!-- EDIT COMPANY -->
+<dialog id="editCompanyModal" class="modal">
+    <h3>Edit Company</h3>
+    <input id="editCompanyName" required>
+    <input id="editCompanyLocation" required>
+    <div class="modal-actions">
+        <button id="saveCompanyEdit">Save</button>
+        <button class="cancel">Cancel</button>
+    </div>
+</dialog>
+
+<!-- ADD DEAL -->
+<dialog id="dealModal" class="modal">
+    <h3>Add Deal</h3>
+
+    <select id="dealType" required>
+        <option value="">Select meal type</option>
+        <option value="General">General</option>
+        <option value="Breakfast">Breakfast</option>
+        <option value="Lunch">Lunch</option>
+        <option value="Dinner">Dinner</option>
+    </select>
+
+    <textarea id="dealText" placeholder="Deal description" required></textarea>
+
+    <div id="addDealDays" class="days-list">
+        {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+        <label><input type="checkbox" value="{{ day }}"> {{ day }}</label>
+        {% endfor %}
+    </div>
+
+    <div class="modal-actions">
+        <button id="addDealBtn">Add</button>
+        <button class="cancel">Cancel</button>
+    </div>
+</dialog>
+
+<!-- EDIT DEAL -->
+<dialog id="editDealModal" class="modal">
+    <h3>Edit Deal</h3>
+
+    <select id="editDealType" required>
+        <option value="">Select meal type</option>
+        <option value="General">General</option>
+        <option value="Breakfast">Breakfast</option>
+        <option value="Lunch">Lunch</option>
+        <option value="Dinner">Dinner</option>
+    </select>
+
+    <textarea id="editDealText" required></textarea>
+
+    <div id="editDealDays" class="days-list">
+        {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+        <label><input type="checkbox" value="{{ day }}"> {{ day }}</label>
+        {% endfor %}
+    </div>
+
+    <div class="modal-actions">
+        <button id="saveDealEdit">Save</button>
+        <button class="cancel">Cancel</button>
+    </div>
+</dialog>
+
+</body>
+</html>

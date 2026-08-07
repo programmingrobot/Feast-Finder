@@ -1,0 +1,84 @@
+# ==============================
+# Global rules
+# ==============================
+User-agent: *
+Disallow: /admin/
+Allow: /
+
+# ==============================
+# Google
+# ==============================
+User-agent: Googlebot
+Disallow: /admin/
+
+User-agent: Googlebot-Image
+Disallow: /admin/
+
+User-agent: Googlebot-News
+Disallow: /admin/
+
+User-agent: Googlebot-Video
+Disallow: /admin/
+
+# ==============================
+# Bing / Microsoft
+# ==============================
+User-agent: Bingbot
+Disallow: /admin/
+
+User-agent: MSNBot
+Disallow: /admin/
+
+# ==============================
+# AI / LLM Crawlers
+# ==============================
+User-agent: GPTBot
+Disallow: /admin/
+
+User-agent: ChatGPT-User
+Disallow: /admin/
+
+User-agent: OpenAI
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Disallow: /admin/
+
+User-agent: Anthropic
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Disallow: /admin/
+
+User-agent: PerplexityAI
+Disallow: /admin/
+
+User-agent: YouBot
+Disallow: /admin/
+
+User-agent: CCBot
+Disallow: /admin/
+
+# ==============================
+# Common scrapers
+# ==============================
+User-agent: SemrushBot
+Disallow: /admin/
+
+User-agent: AhrefsBot
+Disallow: /admin/
+
+User-agent: MJ12bot
+Disallow: /admin/
+
+User-agent: DotBot
+Disallow: /admin/
+
+User-agent: BLEXBot
+Disallow: /admin/
+
+# ==============================
+# Archive bots
+# ==============================
+User-agent: ia_archiver
+Disallow: /admin/

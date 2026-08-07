@@ -1,0 +1,575 @@
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
+import os, json, uuid
+from datetime import datetime, timedelta
+from functools import wraps
+import logging
+from math import asin, cos, radians, sin, sqrt
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
+from werkzeug.security import check_password_hash, generate_password_hash
+
+ADMIN_PASSWORD = "6418"
+
+# --- Flask/Werkzeug logging suppression ---
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.WARNING)  # only show warnings and errors
+
+app = Flask(__name__)
+
+# -----------------------------
+# CONFIG
+# -----------------------------
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.permanent_session_lifetime = timedelta(days=7)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DEALS_FILE = os.path.join(DATA_DIR, "deals.json")
+MESSAGES_FILE = os.path.join(DATA_DIR, "messages.json")
+GEOCODE_CACHE_FILE = os.path.join(DATA_DIR, "geocode_cache.json")
+PASSWORD_FILE = os.path.join(BASE_DIR, "password.txt")
+
+# -----------------------------
+# INIT FILES
+# -----------------------------
+def init_files():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(DEALS_FILE):
+        with open(DEALS_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2)
+    if not os.path.exists(MESSAGES_FILE):
+        with open(MESSAGES_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=2)
+    if not os.path.exists(GEOCODE_CACHE_FILE):
+        with open(GEOCODE_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2)
+    if not os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
+            f.write(generate_password_hash(ADMIN_PASSWORD))
+
+init_files()
+
+# -----------------------------
+# HELPERS
+# -----------------------------
+def load_json_file(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        save_json_file(path, default)
+        return default.copy() if isinstance(default, (dict, list)) else default
+    if not isinstance(data, type(default)):
+        save_json_file(path, default)
+        return default.copy() if isinstance(default, (dict, list)) else default
+    return data
+
+def save_json_file(path, data):
+    directory = os.path.dirname(path) or "."
+    os.makedirs(directory, exist_ok=True)
+    temp_path = f"{path}.tmp"
+    with open(temp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(temp_path, path)
+
+def load_deals():
+    return load_json_file(DEALS_FILE, {})
+
+def save_deals(data):
+    save_json_file(DEALS_FILE, data)
+
+def load_messages():
+    return load_json_file(MESSAGES_FILE, [])
+
+def save_messages(data):
+    save_json_file(MESSAGES_FILE, data)
+
+def load_geocode_cache():
+    return load_json_file(GEOCODE_CACHE_FILE, {})
+
+def save_geocode_cache(data):
+    save_json_file(GEOCODE_CACHE_FILE, data)
+
+def load_password_hash():
+    try:
+        with open(PASSWORD_FILE, "r", encoding="utf-8") as f:
+            password_hash = f.read().strip()
+    except OSError:
+        return ""
+    return password_hash
+
+def check_admin_password(password):
+    if not password:
+        return False
+
+    password_hash = load_password_hash()
+    if password_hash:
+        try:
+            if check_password_hash(password_hash, password):
+                return True
+        except ValueError:
+            pass
+
+    return password == ADMIN_PASSWORD
+
+def set_admin_password(password):
+    with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
+        f.write(generate_password_hash(password))
+
+def geocode_address(location):
+    cache = load_geocode_cache()
+    cached = cache.get(location)
+    if isinstance(cached, dict) and cached.get("lat") is not None and cached.get("lon") is not None:
+        return cached
+
+    params = urllib_parse.urlencode({
+        "q": location,
+        "format": "jsonv2",
+        "limit": 1
+    })
+    geocode_request = urllib_request.Request(
+        f"https://nominatim.openstreetmap.org/search?{params}",
+        headers={
+            "User-Agent": os.environ.get("GEOCODER_USER_AGENT", "LatrobeValleyDeals/1.0"),
+            "Accept": "application/json"
+        }
+    )
+
+    with urllib_request.urlopen(geocode_request, timeout=10) as response:
+        results = json.load(response)
+
+    if not results:
+        return None
+
+    best_match = results[0]
+    coordinates = {
+        "lat": float(best_match["lat"]),
+        "lon": float(best_match["lon"])
+    }
+    cache[location] = coordinates
+    save_geocode_cache(cache)
+    return coordinates
+
+def calculate_distance_km(lat1, lon1, lat2, lon2):
+    earth_radius_km = 6371.0
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+
+    a_value = (
+        sin(delta_lat / 2) ** 2
+        + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lon / 2) ** 2
+    )
+    c_value = 2 * asin(sqrt(a_value))
+    return earth_radius_km * c_value
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("admin_logged_in"):
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+def block_bots(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        ua = (request.headers.get("User-Agent") or "").lower()
+        blocked = [
+            "googlebot","bingbot","gptbot","openai","anthropic",
+            "claudebot","perplexitybot","ahrefsbot","semrushbot"
+        ]
+        if any(bot in ua for bot in blocked):
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+# -----------------------------
+# PUBLIC ROUTES
+# -----------------------------
+@app.route("/")
+def home():
+    deals_data = load_deals()
+
+    today = datetime.now().strftime("%A")
+    selected_day = request.args.get("day", today)
+
+    # Fix if the query passed "Today"
+    if selected_day == "Today":
+        selected_day = today
+
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    if per_page not in [10, 20, 50, 100, 200]:
+        per_page = 10
+
+    grouped_results = {
+        "General": [],
+        "Breakfast": [],
+        "Lunch": [],
+        "Dinner": []
+    }
+
+    # Build grouped lists
+    for company in sorted(deals_data.keys(), key=lambda x: (x or "").lower()):
+        info = deals_data[company]
+        location = info.get("Details", {}).get("location", "")
+
+        for deal in sorted(info.get("Deals", []), key=lambda d: (d.get("text") or "").lower()):
+            # Assign ID if missing
+            if "id" not in deal:
+                deal["id"] = str(uuid.uuid4())
+
+            if selected_day not in deal.get("days", []):
+                continue
+
+            deal_type = deal.get("type", "").strip().capitalize()
+            if deal_type not in grouped_results:
+                deal_type = "General"
+
+            grouped_results[deal_type].append({
+                "id": deal["id"],
+                "company": company,
+                "description": deal.get("text", ""),
+                "location": location
+            })
+
+    # Save back any missing IDs
+    save_deals(deals_data)
+
+    # Per-category pagination
+    paginated_results = {}
+    total_pages_per_section = {}
+
+    for section, deals in grouped_results.items():
+        total = len(deals)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        total_pages_per_section[section] = total_pages
+
+        if page < 1:
+            page = 1
+        elif page > total_pages:
+            page = total_pages
+
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_results[section] = deals[start:end]
+
+    return render_template(
+        "index.html",
+        grouped_results=paginated_results,
+        selected_day=selected_day,
+        today_real=today,
+        days_order=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        page=page,
+        per_page=per_page,
+        total_pages_per_section=total_pages_per_section,
+        max_pages=max(total_pages_per_section.values())  # added for template safety
+    )
+
+@app.route("/submit_deal", methods=["POST"])
+def submit_deal():
+    data = request.get_json(silent=True) or {}
+    if not all(data.get(k) for k in ("name","address","email","deals")):
+        return jsonify(success=False, error="All fields required")
+
+    messages = load_messages()
+    messages.append({
+        "id": str(uuid.uuid4()),
+        "business_name": data["name"].strip(),
+        "business_address": data["address"].strip(),
+        "business_email": data["email"].strip(),
+        "deals": data["deals"].strip(),
+        "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "approved": False
+    })
+    save_messages(messages)
+    return jsonify(success=True)
+
+@app.route("/about")
+def about_us():
+    return render_template("about_us.html")
+
+# -----------------------------
+# JSON endpoint for all deals
+# -----------------------------
+@app.route("/collect_deals")
+def collect_deals():
+    """
+    Returns the entire deals database as JSON.
+    """
+    deals = load_deals()
+    return jsonify(deals)
+
+@app.route("/distance_lookup", methods=["POST"])
+def distance_lookup():
+    data = request.get_json(silent=True) or {}
+    try:
+        user_lat = float(data.get("latitude"))
+        user_lon = float(data.get("longitude"))
+    except (TypeError, ValueError):
+        return jsonify(success=False, error="Valid coordinates are required"), 400
+
+    locations = data.get("locations", [])
+    if not isinstance(locations, list) or not locations:
+        return jsonify(success=False, error="Locations are required"), 400
+
+    results = {}
+    for raw_location in locations:
+        location = str(raw_location).strip()
+        if not location:
+            continue
+
+        try:
+            coordinates = geocode_address(location)
+        except (urllib_error.URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError):
+            return jsonify(success=False, error="Distance lookup is unavailable right now"), 502
+
+        if not coordinates:
+            results[location] = None
+            continue
+
+        results[location] = round(
+            calculate_distance_km(
+                user_lat,
+                user_lon,
+                coordinates["lat"],
+                coordinates["lon"]
+            ),
+            2
+        )
+
+    return jsonify(success=True, distances=results)
+
+@app.route("/robots.txt")
+def robots_txt():
+    return send_from_directory(app.static_folder, "robots.txt")
+
+# -----------------------------
+# LOGIN
+# -----------------------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+
+        if check_admin_password(password):
+            session.permanent = True
+            session["admin_logged_in"] = True
+            return redirect(url_for("admin_panel"))
+
+        error = "Incorrect password."
+
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/change_password", methods=["GET", "POST"])
+@admin_required
+@block_bots
+def change_password():
+    error = None
+
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not check_admin_password(current_password):
+            error = "Current password is incorrect."
+        elif new_password != confirm_password:
+            error = "New passwords do not match."
+        else:
+            set_admin_password(new_password)
+            return redirect(url_for("admin_panel"))
+
+    return render_template("change_password.html", error=error)
+
+# -----------------------------
+# ADMIN
+# -----------------------------
+@app.route("/admin")
+@admin_required
+@block_bots
+def admin_panel():
+    companies = load_deals()
+    messages = sorted(load_messages(), key=lambda m: m["submitted_at"], reverse=True)
+
+    companies = dict(sorted(companies.items(), key=lambda i: (i[0] or "").lower()))
+    for c in companies:
+        companies[c]["Deals"] = sorted(
+            companies[c]["Deals"],
+            key=lambda d: (d.get("text") or "").lower()
+        )
+
+    return render_template("admin.html", companies=companies, messages=messages)
+
+@app.route("/admin/add_company", methods=["POST"])
+@admin_required
+@block_bots
+def add_company():
+    data = request.get_json(silent=True) or {}
+    supplier = data.get("supplier","").strip()
+    location = data.get("location","").strip()
+
+    if not supplier:
+        return jsonify(error="Company name required"), 400
+
+    if not location:
+        return jsonify(error="Location required"), 400
+
+    deals = load_deals()
+    if supplier in deals:
+        return jsonify(error="Company already exists"), 400
+
+    deals[supplier] = {"Details":{"location":location},"Deals":[]}
+    save_deals(deals)
+    return jsonify(success=True)
+
+@app.route("/admin/edit_company", methods=["POST"])
+@admin_required
+@block_bots
+def edit_company():
+    data = request.get_json(silent=True) or {}
+    old_supplier = data.get("old_supplier","").strip()
+    new_supplier = data.get("new_supplier","").strip()
+    location = data.get("location","").strip()
+
+    if not new_supplier:
+        return jsonify(error="Company name required"), 400
+    if not location:
+        return jsonify(error="Location required"), 400
+
+    deals = load_deals()
+
+    if old_supplier not in deals:
+        return jsonify(error="Original company not found"), 404
+    if old_supplier != new_supplier and new_supplier in deals:
+        return jsonify(error="Company name already exists"), 400
+
+    # Update company name if changed
+    if old_supplier != new_supplier:
+        deals[new_supplier] = deals.pop(old_supplier)
+
+    # Update location
+    deals[new_supplier]["Details"]["location"] = location
+
+    save_deals(deals)
+    return jsonify(success=True)
+
+@app.route("/admin/delete_company", methods=["POST"])
+@admin_required
+@block_bots
+def delete_company():
+    data = request.get_json(silent=True) or {}
+    deals = load_deals()
+    deals.pop(data.get("supplier"), None)
+    save_deals(deals)
+    return jsonify(success=True)
+
+@app.route("/admin/add_deal", methods=["POST"])
+@admin_required
+@block_bots
+def add_deal():
+    data = request.get_json(silent=True) or {}
+    supplier = data.get("supplier", "").strip()
+    text = data.get("deal","").strip()
+    deal_type = data.get("type","").strip()
+    days = data.get("days", [])
+
+    if not all([supplier, text, deal_type, days]):
+        return jsonify(error="All fields required"), 400
+
+    deals = load_deals()
+    if supplier not in deals:
+        return jsonify(error="Company not found"), 404
+
+    new_deal = {
+        "id": str(uuid.uuid4()),
+        "text": text,
+        "type": deal_type,
+        "days": days
+    }
+
+    deals[supplier]["Deals"].append(new_deal)
+    save_deals(deals)
+    return jsonify(success=True)
+
+@app.route("/admin/edit_deal", methods=["POST"])
+@admin_required
+@block_bots
+def edit_deal():
+    data = request.get_json(silent=True) or {}
+
+    supplier = data.get("supplier", "").strip()
+    deal_id = str(data.get("deal_id", "")).strip()
+    new_deal = data.get("new_deal", "").strip()
+    deal_type = data.get("type", "").strip()
+    days = data.get("days", [])
+
+    if not supplier or not deal_id or not new_deal or not deal_type or not isinstance(days, list) or not days:
+        return jsonify(error="Missing or invalid required fields"), 400
+
+    deals = load_deals()
+
+    if supplier not in deals:
+        return jsonify(error="Company not found"), 404
+
+    for deal in deals[supplier]["Deals"]:
+        if str(deal.get("id")) == deal_id:
+            deal["text"] = new_deal
+            deal["type"] = deal_type
+            deal["days"] = days
+            save_deals(deals)
+            return jsonify(success=True)
+
+    return jsonify(error="Deal not found"), 404
+
+@app.route("/admin/delete_deal", methods=["POST"])
+@admin_required
+@block_bots
+def delete_deal():
+    data = request.get_json(silent=True) or {}
+    deals = load_deals()
+    supplier = data.get("supplier", "").strip()
+    deal_id = str(data.get("deal_id", "")).strip()
+
+    if not supplier or not deal_id:
+        return jsonify(error="Missing required fields"), 400
+
+    if supplier not in deals:
+        return jsonify(error="Supplier not found"), 404
+
+    deals[supplier]["Deals"] = [
+        d for d in deals[supplier]["Deals"]
+        if str(d.get("id")) != deal_id
+    ]
+    save_deals(deals)
+    return jsonify(success=True)
+
+@app.route("/admin/delete_message", methods=["POST"])
+@admin_required
+@block_bots
+def delete_message():
+    data = request.get_json(silent=True) or {}
+    message_id = str(data.get("id", "")).strip()
+    if not message_id:
+        return jsonify(error="Missing required fields"), 400
+
+    messages = [m for m in load_messages() if str(m.get("id")) != message_id]
+    save_messages(messages)
+    return jsonify(success=True)
+
+if __name__ == "__main__":
+    app.run(debug=False)

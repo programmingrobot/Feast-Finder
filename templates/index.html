@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>Latrobe Valley Deals</title>
+
+	<!-- SEO Meta -->
+	<meta name="description" content="Find cheap food deals in Traralgon and the Latrobe Valley. Discover discounts, specials, and affordable meals near you.">
+
+	<meta name="keywords" content="Latrobe Valley food deals, Traralgon cheap eats, cheap meals Latrobe Valley, discount restaurants Traralgon, affordable food Latrobe, Traralgon lunch specials, Traralgon dinner deals, Victoria food deals, cheap takeaway Traralgon, restaurant discounts Latrobe Valley, budget meals Traralgon, meal deals Latrobe, Traralgon cafes offers, food promotions Latrobe Valley, cheap fast food Traralgon, specials near me Latrobe Valley, discounted meals Traralgon, travel eats Latrobe, food deals Victoria, eat cheap Traralgon, daily food specials Latrobe Valley, Traralgon restaurants cheap, food bargains Latrobe">
+
+	<meta name="robots" content="index, follow">
+	<meta name="googlebot" content="index, follow">
+	<meta http-equiv="content-language" content="en">
+
+	<!-- Open Graph -->
+	<meta property="og:title" content="Latrobe Valley Food Deals">
+	<meta property="og:description" content="Discover cheap food deals in Traralgon and the Latrobe Valley. Find discounts, specials, and affordable meals near you.">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://www.yourdomain.com/">
+	<meta property="og:image" content="{{ url_for('static', filename='logo.png') }}">
+
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Latrobe Valley Food Deals">
+	<meta name="twitter:description" content="Find the best cheap eats in Latrobe Valley.">
+	<meta name="twitter:image" content="{{ url_for('static', filename='logo.png') }}">
+
+	<!-- Styles & Icon -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+</head>
+<body>
+
+<header>
+	<img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+
+	<div class="header-buttons">
+		<a href="{{ url_for('about_us') }}" class="info-btn" title="See the About Us page">
+			<img src="{{ url_for('static', filename='about_us.png') }}" alt="About Us">
+		</a>
+	</div>
+</header>
+
+	<main class="deals-container" id="dealsContainer">
+
+		{% set sections = ["General", "Breakfast", "Lunch", "Dinner"] %}
+
+		<div id="dealSectionsContainer">
+			{% for section in sections %}
+				{% set section_deals = grouped_results.get(section, []) %}
+				{% if section_deals %}
+					<section class="deal-section" data-section="{{ section }}" data-original-index="{{ loop.index0 }}">
+					<h2 class="section-header">{{ section }}</h2>
+					<hr class="section-hr">
+
+					<div class="deal-list">
+						{% for deal in section_deals %}
+							<div class="deal-entry" data-location="{{ deal.location or '' }}" data-original-index="{{ loop.index0 }}">
+								<div class="deal-card">
+									<p class="deal-description">{{ deal.description }}</p>
+									<p class="deal-meta">
+										{{ deal.company }}
+										{% if deal.location %}
+											— <span class="deal-location">{{ deal.location }}</span>
+											<span class="deal-distance" hidden></span>
+											<button type="button"
+													class="map-open-btn"
+													data-location="{{ deal.location }}">
+												Show on Maps
+											</button>
+										{% endif %}
+									</p>
+								</div>
+								<hr>
+							</div>
+						{% endfor %}
+					</div>
+				</section>
+
+				{% endif %}
+			{% endfor %}
+		</div>
+
+		<!-- Add deal button -->
+		<button class="btn" id="openDealModal">
+		Are you a business? Add your deals here.
+	</button>
+
+</main>
+
+	<div class="filter-bar">
+
+			<button class="btn" id="openDealModalBottom">Request Deals</button>
+			<div class="geo-controls">
+				<span class="geo-label">Near Me</span>
+				<button type="button" class="btn geo-toggle-btn" id="geoToggleButton" aria-pressed="false">Off</button>
+			</div>
+			<span id="geoStatus" class="geo-status" aria-live="polite"></span>
+
+			<select id="dayFilter">
+		{% for d in days_order %}
+			<option value="{{ d }}" {% if d == selected_day %}selected{% endif %}>
+				{{ "Today" if d == today_real else d }}
+			</option>
+		{% endfor %}
+	</select>
+
+	<select id="perPageSelect">
+		<option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+		<option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+		<option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+		<option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+		<option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
+	</select>
+
+	<div class="pagination-controls">
+		{% if page > 1 %}
+			<a class="page-btn" href="/?day={{ selected_day }}&page={{ page - 1 }}&per_page={{ per_page }}">⬅</a>
+		{% endif %}
+
+		<span>Page {{ page }}</span>
+
+		{% set max_pages = total_pages_per_section.values() | max %}
+		{% if page < max_pages %}
+			<a class="page-btn" href="/?day={{ selected_day }}&page={{ page + 1 }}&per_page={{ per_page }}">➡</a>
+		{% endif %}
+	</div>
+
+</div>
+
+<dialog id="mapDialog" class="map-dialog">
+		<div class="map-modal-content">
+			<h3>Location Map</h3>
+			<p id="mapDialogLocation" class="map-dialog-location"></p>
+			<p id="mapDialogDistance" class="map-dialog-distance" hidden></p>
+			<p id="mapDialogStatus" class="status-text"></p>
+			<iframe id="mapFrame"
+					title="Location map"
+				loading="lazy"
+				referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+			<div class="map-modal-actions">
+				<div class="map-open-actions">
+					<a id="openInGoogleMaps"
+					   class="btn"
+					   href="#"
+					   target="_blank"
+					   rel="noopener noreferrer">
+						Open in Google Maps
+					</a>
+					<span id="openInGoogleMapsDistance" class="map-open-distance" hidden></span>
+				</div>
+				<button type="button" class="btn logout-btn" id="closeMapDialog">Close</button>
+			</div>
+		</div>
+</dialog>
+
+<!-- DEAL SUBMISSION MODAL -->
+<dialog id="dealDialog">
+	<form id="dealForm">
+		<h3>Submit Business Deals (Latrobe Valley Only)</h3>
+
+		<input type="text" id="businessName" placeholder="Business Name" required>
+		<input type="text" id="businessAddress" placeholder="Business Address (Latrobe Valley only)" required>
+		<input type="email" id="businessEmail" placeholder="Business Email" required>
+
+		<div style="display: flex; align-items: center; gap: 8px;">
+			<label for="businessDeals" style="font-weight: bold;">Business Deals</label>
+		</div>
+
+		<textarea id="businessDeals"
+				  placeholder="For each deal, specify the name of the deal and the days active. Example: 2-for-1 pizzas (Mon–Wed)"
+				  rows="6"
+				  required></textarea>
+
+			<div class="agreement">
+				<div class="agreement-note">
+					By submitting, you agree that requests may be reviewed and declined if they do not meet our requirements.
+				</div>
+			</div>
+
+		<div style="margin-top: 15px;">
+			<button type="submit" class="btn">Submit</button>
+			<button type="button" class="btn logout-btn" id="cancelDealBtn">Cancel</button>
+		</div>
+
+		<p id="dealStatus" class="status-text"></p>
+	</form>
+</dialog>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JDDMXKGDF3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-JDDMXKGDF3');
+</script>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

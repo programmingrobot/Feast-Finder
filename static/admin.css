@@ -1,0 +1,485 @@
+:root {
+    --header-height: 6.8rem;
+}
+
+/* ==========================
+   BASE RESET
+========================== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(180deg, #e6e6e6, #dcdcdc);
+    color: #121212;
+    font-size: 1.05rem;
+}
+
+/* ==========================
+   HEADER (FIXED)
+========================== */
+.admin-header {
+    background: linear-gradient(135deg, #7a0000, #5c0000);
+    color: white;
+    padding: 1rem 3vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 0.4rem 1rem rgba(0,0,0,0.25);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: var(--header-height);
+    z-index: 1000;
+}
+
+.admin-header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 0;
+}
+
+/* ==========================
+   BUTTONS (SAFE + FUNCTIONAL)
+========================== */
+button,
+input[type="button"],
+input[type="submit"] {
+    padding: 0.6em 1.3em;
+    background: linear-gradient(135deg, #8b0000, #5f0000);
+    color: white;
+    border: none;
+    border-radius: 0.6em;
+    cursor: pointer;
+    font-size: 0.95em;
+    line-height: 1.1;
+    transition:
+        background 0.15s ease,
+        transform 0.12s ease,
+        box-shadow 0.12s ease;
+    box-shadow:
+        0 0.25em 0.6em rgba(0,0,0,0.2),
+        inset 0 0.05em 0 rgba(255,255,255,0.15);
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover {
+    background: linear-gradient(135deg, #a00000, #700000);
+    transform: translateY(-0.1em);
+    box-shadow:
+        0 0.4em 0.9em rgba(0,0,0,0.28),
+        inset 0 0.05em 0 rgba(255,255,255,0.2);
+}
+
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active {
+    transform: translateY(0);
+    box-shadow:
+        0 0.2em 0.4em rgba(0,0,0,0.2),
+        inset 0 0.15em 0 rgba(0,0,0,0.25);
+}
+
+button.cancel {
+    background: linear-gradient(135deg, #e0e0e0, #cfcfcf);
+    color: #121212;
+    box-shadow: 0 0.2em 0.45em rgba(0,0,0,0.15);
+}
+
+button.cancel:hover {
+    background: linear-gradient(135deg, #ededed, #d6d6d6);
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, #555, #333);
+}
+
+/* Prevent anchor-wrapped buttons from breaking layout */
+a > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+/* ==========================
+   MAIN CONTAINER (LAYOUT)
+========================== */
+.admin-container {
+    max-width: 100%;
+    margin: 0;
+    padding: calc(var(--header-height) + 2.5rem) 2.5rem 2.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* ==========================
+   MESSAGES PANEL (LEFT SIDEBAR)
+========================== */
+.messages-panel {
+    width: 20%;
+    min-width: 17rem;
+    height: calc(100vh - var(--header-height) - 3.5rem);
+    background: linear-gradient(180deg, #ffffff, #f5f5f5);
+    border-radius: 0.9rem;
+    padding: 1rem;
+    box-shadow:
+        0 0.8rem 1.6rem rgba(0,0,0,0.18),
+        inset 0 0.05rem 0 rgba(255,255,255,0.5);
+    display: flex;
+    flex-direction: column;
+
+    position: fixed;
+    top: calc(var(--header-height) + 2rem);
+    left: 1.5rem;
+
+    overflow-y: auto;
+}
+
+.messages-panel h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-right: 0.3rem;
+}
+
+/* Individual message */
+.message-card {
+    background: linear-gradient(180deg, #f9f9f9, #eeeeee);
+    border-radius: 0.6rem;
+    padding: 0.7rem 0.8rem;
+    box-shadow:
+        0 0.3rem 0.7rem rgba(0,0,0,0.12),
+        inset 0 0.05rem 0 rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+    position: relative;
+}
+
+.message-header strong {
+    font-size: 0.95rem;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.message-card p {
+    margin: 0.25rem 0;
+    line-height: 1.3;
+}
+
+.message-deals {
+    white-space: pre-wrap;
+}
+
+/* Delete (X) button */
+.delete-message-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #888;
+    padding: 0.2em 0.4em;
+    border-radius: 0.4em;
+    line-height: 1;
+    transition: box-shadow 0.12s ease, transform 0.12s ease, color 0.12s ease;
+}
+
+.delete-message-btn:hover {
+    color: #444;
+    box-shadow: 0 0.2em 0.5em rgba(0,0,0,0.25);
+    transform: translateY(-0.05em);
+}
+
+/* ==========================
+   MAIN ADMIN AREA (RIGHT)
+========================== */
+.admin-main {
+    width: 100%;
+    max-width: 90rem;
+    margin-left: 23%;
+    padding-bottom: 4rem;
+}
+
+/* ==========================
+   ACTION BAR
+========================== */
+.admin-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+/* ==========================
+   SUPPLIERS
+========================== */
+.suppliers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2.2rem;
+}
+
+/* ==========================
+   SUPPLIER CARD
+========================== */
+.supplier-card {
+    background: linear-gradient(180deg, #ffffff, #f8f8f8);
+    border-radius: 0.9rem;
+    padding: 1.8rem 2.2rem;
+    box-shadow:
+        0 0.8rem 1.6rem rgba(0,0,0,0.18),
+        inset 0 0.05rem 0 rgba(255,255,255,0.5);
+    text-align: center;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.supplier-card:hover {
+    transform: translateY(-0.18rem);
+    box-shadow:
+        0 1rem 2.2rem rgba(0,0,0,0.22),
+        inset 0 0.05rem 0 rgba(255,255,255,0.6);
+}
+
+.supplier-card h3 {
+    margin-top: 0;
+    font-size: 1.35rem;
+}
+
+.location {
+    font-size: 1rem;
+}
+
+/* ==========================
+   COMPANY ACTIONS
+========================== */
+.company-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.7rem;
+    margin: 1rem 0 1.3rem;
+}
+
+/* ==========================
+   DEALS LIST
+========================== */
+.deals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+/* ==========================
+   DEAL ROW
+========================== */
+.deal-row {
+    width: 100%;
+    max-width: 45rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #f7f7f7, #eeeeee);
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.9rem;
+    min-height: 3.2rem;
+    box-shadow:
+        0 0.35rem 0.8rem rgba(0,0,0,0.15),
+        inset 0 0.05rem 0 rgba(255,255,255,0.45);
+    transition:
+        background 0.15s ease,
+        transform 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.deal-row:hover {
+    background: linear-gradient(180deg, #ffffff, #f2f2f2);
+    transform: translateY(-0.12rem);
+    box-shadow:
+        0 0.6rem 1.2rem rgba(0,0,0,0.2),
+        inset 0 0.05rem 0 rgba(255,255,255,0.6);
+}
+
+.deal-text {
+    font-size: 1rem;
+    flex: 1;
+    text-align: left;
+    margin-right: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deal-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.deal-actions button {
+    padding: 0.4em 0.8em;
+    font-size: 0.95em;
+    border-radius: 0.4em;
+}
+
+/* ==========================
+   MODALS
+========================== */
+dialog.modal {
+    width: 28%;
+    min-width: 18rem;
+    padding: 1.7rem;
+    border: none;
+    border-radius: 0.8rem;
+    background: linear-gradient(180deg, #ffffff, #f6f6f6);
+    box-shadow:
+        0 1.6rem 3.2rem rgba(0,0,0,0.35),
+        inset 0 0.05rem 0 rgba(255,255,255,0.6);
+    text-align: center;
+    animation: modalPop 0.18s ease-out;
+}
+
+@keyframes modalPop {
+    from {
+        transform: scale(0.96) translateY(0.6rem);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+dialog::backdrop {
+    background: rgba(0,0,0,0.45);
+}
+
+/* ==========================
+   FORM ELEMENTS
+========================== */
+input,
+textarea,
+select {
+    font-family: Verdana, Arial, sans-serif;
+    width: 100%;
+    padding: 0.7em 0.75em;
+    margin-bottom: 1rem;
+    font-size: 0.95em;
+    border-radius: 0.5em;
+    border: 1px solid #bbb;
+    background: linear-gradient(180deg, #ffffff, #f8f8f8);
+    box-shadow: inset 0 0.15em 0.3em rgba(0,0,0,0.08);
+    transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: darkred;
+    background: #ffffff;
+    box-shadow:
+        0 0 0 0.125rem rgba(139,0,0,0.15),
+        inset 0 0.15em 0.3em rgba(0,0,0,0.08);
+}
+
+/* ==========================
+   DAY PICKER
+========================== */
+.days-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem;
+    margin-bottom: 1.1rem;
+    text-align: left;
+}
+
+.days-list label {
+    font-size: 0.95rem;
+    padding: 0.35em 0.4em;
+    border-radius: 0.4em;
+    transition: background 0.12s ease, color 0.12s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+}
+
+.days-list label:hover {
+    background: rgba(139,0,0,0.08);
+}
+
+.days-list input {
+    transform: scale(1.15);
+    cursor: pointer;
+}
+
+/* ==========================
+   MODAL FOOTER
+========================== */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 56.25rem) {
+    .admin-container {
+        flex-direction: column;
+        padding: calc(var(--header-height) + 2.5rem) 1.5rem 1.5rem;
+    }
+
+    .messages-panel {
+        position: static;
+        width: 100%;
+        height: auto;
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-main {
+        margin-left: 0;
+    }
+
+    .deal-row {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 37.5rem) {
+    dialog.modal {
+        width: 90%;
+    }
+}

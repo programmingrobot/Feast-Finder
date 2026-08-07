@@ -1,0 +1,793 @@
+@import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+
+/* ==========================
+   DESIGN TOKENS
+========================== */
+:root {
+    --brand: darkred;
+    --brand-hover: #8b0000;
+    --brand-soft: rgba(139,0,0,0,0.08);
+    --bg: #f2f2f2;
+    --text: #121212;
+    --surface: #ffffff;
+    --border: #cccccc;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1.1rem;
+    --shadow-sm: 0 0.25rem 0.7rem rgba(0,0,0,0.12);
+    --shadow-md: 0 0.5rem 1.2rem rgba(0,0,0,0.18);
+    --shadow-lg: 0 0.9rem 2.2rem rgba(0,0,0,0.25);
+    --transition: 0.18s cubic-bezier(.4,0,.2,1);
+}
+
+/* ==========================
+   BASE
+========================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding-bottom: 9rem; /* prevents overlap with fixed filter bar */
+}
+
+/* ==========================
+   HEADER / BANNER
+========================== */
+header {
+    background: linear-gradient(135deg, #7b0000, #b30000);
+    color: #ffffff;
+    padding: 1% 2%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2%;
+    flex-wrap: wrap;
+    box-shadow: 0 0.9% 2.2% rgba(0,0,0,0.32);
+    position: relative;
+}
+
+header h1 {
+    margin: 0;
+    font-family: "Titan One", system-ui, sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    text-align: center;
+    letter-spacing: 0.04em;
+}
+
+/* ---------- SECTION HEADINGS ---------- */
+.deals-container h2 {
+    font-family: "Titan One", system-ui, sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: #000;
+    margin-top: 6%;
+    margin-bottom: 2%;
+    padding-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.deals-container h2 + hr {
+    border: none;
+    border-top: 2px solid #000;
+    width: 60%;
+    margin: 0 auto 6%;
+}
+
+.logo-img {
+    height: 10rem;
+}
+
+/* ==========================
+   HEADER BUTTONS
+========================== */
+.info_btn,
+.about-btn{
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.info_btn,
+.about-btn img{
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+
+.back-btn {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+/* ==========================
+   ABOUT PAGE
+========================== */
+.about-container {
+    padding: 2rem;
+}
+
+/* ==========================
+   DEALS
+========================== */
+.deals-container {
+    max-width: 900px;
+    margin: 2.5rem auto 8.5rem;
+    padding: 0 1.25rem;
+    text-align: center;
+}
+
+.deal-text {
+    font-size: 1.12rem;
+    margin-bottom: 4%;
+    line-height: 1.65;
+}
+
+.deal-type {
+    font-weight: bold;
+    color: darkred;
+    margin-bottom: 0.2rem;
+}
+
+.deal-text strong {
+    font-size: 1.15rem;
+    color: #2b0000;
+}
+
+.deal-text p {
+    margin: 0.35rem 0;
+}
+
+.deal-description {
+    font-size: 1.5em;
+}
+
+.deal-meta {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.deal-location {
+    font-size: 0.95rem;
+    color: #666;
+    font-style: italic;
+}
+
+.deal-distance {
+    font-size: 0.9rem;
+    color: #6d0000;
+    font-weight: 700;
+}
+
+.map-open-btn {
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-md);
+    border: none;
+    background: linear-gradient(135deg, #8b0000, #b30000);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.map-open-btn:hover {
+    background: linear-gradient(135deg, #7a0000, #a00000);
+}
+
+hr {
+    margin: 2rem auto;
+    width: 68%;
+    border: none;
+    border-top: 1px solid #bbb;
+}
+
+/* ==========================
+   FILTER BAR
+========================== */
+.filter-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.95);
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    box-shadow: 0 -0.6rem 1.8rem rgba(0,0,0,0.25);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.geo-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.geo-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #4b4b4b;
+}
+
+.geo-toggle-btn {
+    min-width: 4.2rem;
+}
+
+.geo-toggle-btn.is-on {
+    background: linear-gradient(135deg, #2f7f32, #3f9d44);
+}
+
+.geo-toggle-btn.is-on:hover {
+    background: linear-gradient(135deg, #266b29, #36873b);
+}
+
+.geo-status {
+    font-size: 0.9rem;
+    color: #555;
+    min-height: 1.2rem;
+}
+
+.filter-bar select,
+.filter-bar button,
+.btn {
+    padding: 0.75rem 1.6rem;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition),
+        background var(--transition),
+        transform 0.08s ease;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+}
+
+.filter-bar select {
+    height: 2.2rem;
+    padding: 0.45rem 1.3rem;
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.filter-bar button,
+.page-btn,
+footer .btn,
+dialog .btn {
+    margin: 0.3rem;
+}
+
+.filter-bar select:focus,
+.filter-bar button:focus,
+.btn:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 0.3rem rgba(139,0,0,0.18), var(--shadow-sm);
+}
+
+.filter-bar button {
+    background: var(--brand);
+    color: #fff;
+    border: none;
+    box-shadow: var(--shadow-md);
+}
+
+.filter-bar button:hover {
+    background: var(--brand-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.filter-bar button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==========================
+   GENERIC BUTTONS
+========================== */
+.btn {
+    background: linear-gradient(135deg, #8b0000, #b30000);
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-md);
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #7a0000, #a00000);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-md);
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, #555, #333);
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #444, #222);
+}
+
+/* ==========================
+   PAGINATION
+========================== */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.05rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #8b0000, #b30000);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+    transition: background var(--transition), transform 0.08s ease, box-shadow var(--transition);
+}
+
+.page-btn:hover {
+    background: linear-gradient(135deg, #7a0000, #a00000);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.page-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==========================
+   FOOTER
+========================== */
+footer {
+    text-align: center;
+    padding: 2rem 1rem 6rem;
+    background: transparent;
+}
+
+.footer-link {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+footer .btn {
+    background: linear-gradient(135deg, #8b0000, #b30000);
+    color: #fff;
+}
+
+/* ==========================
+   DIALOG & FORM MODAL
+========================== */
+dialog {
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+    max-width: 560px;
+    width: 94%;
+    background: transparent;
+}
+
+dialog::backdrop {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+}
+
+dialog[open] {
+    animation: modalFadeIn 0.22s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+dialog form {
+    background: var(--surface);
+    padding: 2.6rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.map-modal-content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.map-dialog-location {
+    margin: 0;
+    color: #555;
+    text-align: center;
+}
+
+#mapFrame {
+    width: 100%;
+    min-height: 360px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: #f0f0f0;
+}
+
+.map-modal-actions {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.map-open-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.map-modal-actions .btn {
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+}
+
+.map-dialog-distance,
+.map-open-distance {
+    text-align: center;
+    color: #6d0000;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+form input,
+form textarea,
+dialog input,
+dialog textarea {
+    width: 100%;
+    padding: 1rem 1.1rem;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid #ddd;
+    background: linear-gradient(180deg, #fafafa, #fff);
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform 0.06s ease;
+}
+
+form input::placeholder,
+form textarea::placeholder,
+dialog input::placeholder,
+dialog textarea::placeholder {
+    color: #999;
+}
+
+form input:focus,
+form textarea:focus,
+dialog input:focus,
+dialog textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    background: #fff;
+    box-shadow: 0 0 0 0.3rem rgba(139,0,0,0.18), 0 0.6rem 1.6rem rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+form textarea,
+dialog textarea {
+    resize: vertical;
+    min-height: 7.5rem;
+}
+
+form button,
+dialog .btn {
+    width: 100%;
+    padding: 1rem 1.6rem;
+    font-size: 1.05rem;
+    border-radius: var(--radius-md);
+}
+
+/* ==========================
+   AGREEMENT LABEL
+========================== */
+.agreement {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.agreement-note {
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    background: #ececec;
+    color: #555;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ==========================
+   INFO BUTTON
+========================== */
+.info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background-color: white;
+    border: 4px solid #ff7a18;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    padding: 0;
+    transition: background-color 0.15s ease;
+}
+
+.info-btn img {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+}
+
+.info-btn:hover {
+    background: #7a0000;
+    box-shadow: 0 0 0 0.25rem rgba(139,0,0,0.2);
+}
+
+.info-btn:active {
+    background-color: #ffe2d1;
+}
+
+/* ==========================
+   STATUS TEXT
+========================== */
+.status-text {
+    margin-top: 0.6rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* ==========================
+   MESSAGES
+========================== */
+.error {
+    color: #b00020;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.success-text {
+    color: #1b7f3b;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* ==========================
+   ADMIN LAYOUT
+========================== */
+.admin-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.messages-panel {
+    width: 20%;
+    min-width: 260px;
+    max-height: calc(100vh - 6rem);
+    background: linear-gradient(180deg, #fff, #f5f5f5);
+    border-radius: 0.9rem;
+    padding: 1rem;
+    box-shadow: 0 0.8rem 1.6rem rgba(0,0,0,0.18), inset 0 0.05rem 0 rgba(255,255,255,0.5);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 5.5rem;
+}
+
+.messages-panel h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.messages-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-right: 0.3rem;
+}
+
+.message-card {
+    background: linear-gradient(180deg, #f9f9f9, #eee);
+    border-radius: 0.6rem;
+    padding: 0.7rem 0.8rem;
+    box-shadow: 0 0.3rem 0.7rem rgba(0,0,0,0.12), inset 0 0.05rem 0 rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.3rem;
+}
+
+.message-header strong {
+    font-size: 0.95rem;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.message-card p {
+    margin: 0.25rem 0;
+    line-height: 1.3;
+}
+
+.message-deals {
+    white-space: pre-wrap;
+}
+
+.admin-main {
+    width: 80%;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 900px) {
+    .admin-container {
+        flex-direction: column;
+    }
+    .messages-panel,
+    .admin-main {
+        width: 100%;
+    }
+    .messages-panel {
+        position: static;
+        max-height: none;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 6.5rem;
+    }
+    header {
+        padding: 3% 5%;
+        gap: 3%;
+    }
+    .filter-bar {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        padding: 0.7rem 0.85rem calc(0.7rem + env(safe-area-inset-bottom, 0));
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .filter-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-bar select,
+    .filter-bar button,
+    .geo-controls,
+    .geo-status,
+    .pagination-controls {
+        flex: 0 0 auto;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .filter-bar select,
+    .filter-bar button {
+        padding: 0.65rem 1rem;
+        font-size: 0.92rem;
+    }
+
+    .geo-controls {
+        gap: 0.35rem;
+    }
+
+    .geo-label,
+    .geo-status {
+        white-space: nowrap;
+        font-size: 0.86rem;
+    }
+
+    .geo-toggle-btn {
+        min-width: 3.5rem;
+    }
+
+    .pagination-controls {
+        gap: 0.45rem;
+    }
+
+    .page-btn {
+        padding: 0.55rem 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-bottom: 6rem;
+    }
+
+    header h1 {
+        font-size: clamp(1.4rem, 6vw, 2rem);
+    }
+
+    .filter-bar {
+        gap: 0.45rem;
+        padding: 0.6rem 0.7rem calc(0.6rem + env(safe-area-inset-bottom, 0));
+    }
+
+    .filter-bar select,
+    .filter-bar button {
+        padding: 0.58rem 0.9rem;
+        font-size: 0.88rem;
+    }
+
+    dialog form {
+        padding: 2rem;
+    }
+    .map-modal-actions {
+        flex-direction: column;
+    }
+}

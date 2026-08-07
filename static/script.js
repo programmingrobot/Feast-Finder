@@ -1,0 +1,356 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    const dayFilter = document.getElementById("dayFilter");
+    const perPageSelect = document.getElementById("perPageSelect");
+    const geoToggleButton = document.getElementById("geoToggleButton");
+    const geoStatus = document.getElementById("geoStatus");
+    const mapDialog = document.getElementById("mapDialog");
+    const mapDialogLocation = document.getElementById("mapDialogLocation");
+    const mapDialogDistance = document.getElementById("mapDialogDistance");
+    const mapDialogStatus = document.getElementById("mapDialogStatus");
+    const mapFrame = document.getElementById("mapFrame");
+    const openInGoogleMaps = document.getElementById("openInGoogleMaps");
+    const openInGoogleMapsDistance = document.getElementById("openInGoogleMapsDistance");
+    const closeMapDialog = document.getElementById("closeMapDialog");
+    const dealSections = Array.from(document.querySelectorAll(".deal-section"));
+    const dealSectionsContainer = document.getElementById("dealSectionsContainer");
+    const geoPreferenceKey = "geoDealsEnabled";
+    let currentDistances = {};
+
+    const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+    // Replace today's label with "Today" — DO NOT force select
+    if (dayFilter) {
+        Array.from(dayFilter.options).forEach(opt => {
+            if (opt.value === today) {
+                opt.textContent = "Today";
+            }
+        });
+    }
+
+    function applyFilters() {
+        const url = new URL(window.location.href);
+        if (dayFilter) url.searchParams.set("day", dayFilter.value);
+        if (perPageSelect) url.searchParams.set("per_page", perPageSelect.value);
+        url.searchParams.set("page", 1);
+        window.location.href = url.toString();
+    }
+
+    function setGeoButtonState(enabled) {
+        if (!geoToggleButton) return;
+        geoToggleButton.textContent = enabled ? "On" : "Off";
+        geoToggleButton.setAttribute("aria-pressed", enabled ? "true" : "false");
+        geoToggleButton.classList.toggle("is-on", enabled);
+    }
+
+    function setGeoStatus(message) {
+        if (geoStatus) {
+            geoStatus.textContent = message || "";
+        }
+    }
+
+    function formatDistance(distanceKm) {
+        if (distanceKm == null || Number.isNaN(distanceKm)) {
+            return "";
+        }
+
+        const roundedMeters = Math.max(100, Math.round((distanceKm * 1000) / 100) * 100);
+        if (roundedMeters >= 1000) {
+            return `${(roundedMeters / 1000).toFixed(1)} km away`;
+        }
+        return `${roundedMeters} m away`;
+    }
+
+    function restoreDefaultDealOrder() {
+        currentDistances = {};
+
+        if (dealSectionsContainer) {
+            dealSections
+                .slice()
+                .sort((first, second) => Number(first.dataset.originalIndex) - Number(second.dataset.originalIndex))
+                .forEach(section => {
+                    dealSectionsContainer.appendChild(section);
+                });
+        }
+
+        dealSections.forEach(section => {
+            const dealList = section.querySelector(".deal-list");
+            if (!dealList) return;
+
+            const entries = Array.from(dealList.querySelectorAll(".deal-entry"));
+            entries
+                .sort((first, second) => Number(first.dataset.originalIndex) - Number(second.dataset.originalIndex))
+                .forEach(entry => {
+                    dealList.appendChild(entry);
+                        const distanceLabel = entry.querySelector(".deal-distance");
+                        if (distanceLabel) {
+                            distanceLabel.hidden = true;
+                            distanceLabel.textContent = "";
+                        }
+                    });
+        });
+
+        if (mapDialogDistance) {
+            mapDialogDistance.hidden = true;
+            mapDialogDistance.textContent = "";
+        }
+        if (openInGoogleMapsDistance) {
+            openInGoogleMapsDistance.hidden = true;
+            openInGoogleMapsDistance.textContent = "";
+        }
+    }
+
+    async function enableNearMeMode() {
+        if (!navigator.geolocation) {
+            setGeoStatus("Geolocation is not supported on this device.");
+            localStorage.setItem(geoPreferenceKey, "off");
+            setGeoButtonState(false);
+            return;
+        }
+
+        setGeoStatus("Getting your location...");
+
+        let position;
+        try {
+            position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    maximumAge: 300000,
+                    timeout: 10000
+                });
+            });
+        } catch (error) {
+            setGeoStatus("Location access is unavailable.");
+            localStorage.setItem(geoPreferenceKey, "off");
+            setGeoButtonState(false);
+            restoreDefaultDealOrder();
+            return;
+        }
+
+        const locations = Array.from(
+            new Set(
+                Array.from(document.querySelectorAll(".deal-entry[data-location]"))
+                    .map(entry => (entry.dataset.location || "").trim())
+                    .filter(Boolean)
+            )
+        );
+
+        if (locations.length === 0) {
+            setGeoStatus("No locations are available on this page.");
+            return;
+        }
+
+        setGeoStatus("Finding the closest deals...");
+
+        try {
+            const response = await fetch("/distance_lookup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    locations
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || "Distance lookup failed");
+            }
+
+            currentDistances = data.distances || {};
+
+            dealSections.forEach(section => {
+                const dealList = section.querySelector(".deal-list");
+                if (!dealList) return;
+
+                const entries = Array.from(dealList.querySelectorAll(".deal-entry"));
+                entries
+                    .sort((first, second) => {
+                        const firstLocation = (first.dataset.location || "").trim();
+                        const secondLocation = (second.dataset.location || "").trim();
+                        const firstDistance = data.distances[firstLocation];
+                        const secondDistance = data.distances[secondLocation];
+
+                        if (firstDistance == null && secondDistance == null) {
+                            return Number(first.dataset.originalIndex) - Number(second.dataset.originalIndex);
+                        }
+                        if (firstDistance == null) return 1;
+                        if (secondDistance == null) return -1;
+                        return firstDistance - secondDistance;
+                    })
+                    .forEach(entry => {
+                        dealList.appendChild(entry);
+                        const distanceLabel = entry.querySelector(".deal-distance");
+                        const location = (entry.dataset.location || "").trim();
+                        const distance = data.distances[location];
+                        if (distanceLabel) {
+                            if (distance == null) {
+                                distanceLabel.hidden = true;
+                                distanceLabel.textContent = "";
+                            } else {
+                                distanceLabel.hidden = false;
+                                distanceLabel.textContent = formatDistance(distance);
+                            }
+                        }
+                    });
+            });
+
+            dealSections
+                .slice()
+                .sort((first, second) => {
+                    const firstDistances = Array.from(first.querySelectorAll(".deal-entry"))
+                        .map(entry => currentDistances[(entry.dataset.location || "").trim()])
+                        .filter(distance => distance != null);
+                    const secondDistances = Array.from(second.querySelectorAll(".deal-entry"))
+                        .map(entry => currentDistances[(entry.dataset.location || "").trim()])
+                        .filter(distance => distance != null);
+
+                    const firstNearest = firstDistances.length ? Math.min(...firstDistances) : null;
+                    const secondNearest = secondDistances.length ? Math.min(...secondDistances) : null;
+
+                    if (firstNearest == null && secondNearest == null) {
+                        return Number(first.dataset.originalIndex) - Number(second.dataset.originalIndex);
+                    }
+                    if (firstNearest == null) return 1;
+                    if (secondNearest == null) return -1;
+                    if (firstNearest !== secondNearest) return firstNearest - secondNearest;
+                    return Number(first.dataset.originalIndex) - Number(second.dataset.originalIndex);
+                })
+                .forEach(section => {
+                    dealSectionsContainer?.appendChild(section);
+                });
+
+            setGeoStatus("Showing deals closest to you.");
+        } catch (error) {
+            restoreDefaultDealOrder();
+            setGeoStatus(error.message || "Distance lookup failed");
+            localStorage.setItem(geoPreferenceKey, "off");
+            setGeoButtonState(false);
+        }
+    }
+
+    async function setNearMeMode(enabled) {
+        localStorage.setItem(geoPreferenceKey, enabled ? "on" : "off");
+        setGeoButtonState(enabled);
+
+        if (!enabled) {
+            restoreDefaultDealOrder();
+            setGeoStatus("");
+            return;
+        }
+
+        await enableNearMeMode();
+    }
+
+    // Day filter change → reload page
+    dayFilter?.addEventListener("change", applyFilters);
+
+    // Page size change → reload page
+    perPageSelect?.addEventListener("change", applyFilters);
+
+    geoToggleButton?.addEventListener("click", async () => {
+        const enable = geoToggleButton.getAttribute("aria-pressed") !== "true";
+        await setNearMeMode(enable);
+    });
+
+    document.querySelectorAll(".map-open-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const location = button.dataset.location || "";
+
+            if (!mapDialog || !mapDialogLocation || !mapDialogStatus || !mapFrame || !openInGoogleMaps) {
+                return;
+            }
+
+            const mapQuery = encodeURIComponent(location);
+            const distanceText = formatDistance(currentDistances[location]);
+
+            mapDialogLocation.textContent = location;
+            if (mapDialogDistance) {
+                mapDialogDistance.hidden = !distanceText;
+                mapDialogDistance.textContent = distanceText;
+            }
+            mapDialogStatus.textContent = "";
+            mapFrame.src = `https://www.google.com/maps?q=${mapQuery}&z=15&output=embed`;
+            openInGoogleMaps.href = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+            openInGoogleMaps.removeAttribute("aria-disabled");
+            if (openInGoogleMapsDistance) {
+                openInGoogleMapsDistance.hidden = !distanceText;
+                openInGoogleMapsDistance.textContent = distanceText;
+            }
+            mapDialog.showModal();
+        });
+    });
+
+    closeMapDialog?.addEventListener("click", () => {
+        mapDialog?.close();
+        if (mapFrame) {
+            mapFrame.removeAttribute("src");
+        }
+        if (mapDialogDistance) {
+            mapDialogDistance.hidden = true;
+            mapDialogDistance.textContent = "";
+        }
+        if (openInGoogleMapsDistance) {
+            openInGoogleMapsDistance.hidden = true;
+            openInGoogleMapsDistance.textContent = "";
+        }
+    });
+
+    // --------------------------
+    // DEAL SUBMISSION MODAL
+    // --------------------------
+    const openButtons = [
+        document.getElementById("openDealModal"),
+        document.getElementById("openDealModalBottom")
+    ].filter(Boolean);
+    const dialog = document.getElementById("dealDialog");
+    const form = document.getElementById("dealForm");
+    const cancelBtn = document.getElementById("cancelDealBtn");
+
+    openButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            dialog.showModal();
+            form.reset();
+        });
+    });
+
+    cancelBtn?.addEventListener("click", () => {
+        dialog.close();
+    });
+
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("businessName").value;
+        const address = document.getElementById("businessAddress").value;
+        const email = document.getElementById("businessEmail").value;
+        const deals = document.getElementById("businessDeals").value;
+
+        // Close immediately
+        dialog.close();
+
+        try {
+            await fetch("/submit_deal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name,
+                    address,
+                    email,
+                    deals
+                })
+            });
+        } catch (err) {
+            console.error("Submission failed:", err);
+        }
+    });
+
+    const initialGeoEnabled = localStorage.getItem(geoPreferenceKey) === "on";
+    setGeoButtonState(initialGeoEnabled);
+    if (initialGeoEnabled) {
+        void enableNearMeMode();
+    } else {
+        restoreDefaultDealOrder();
+    }
+});

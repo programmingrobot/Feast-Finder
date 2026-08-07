@@ -1,0 +1,11 @@
+Hi
+
+I built this app because I wanted to help people in my town find good deals on food. Sometimes it is hard to know where to go for a cheap and yummy lunch, so my app lists great deals in Traralgon to make it fast and easy for everyone.
+
+My name is Jack and I am 9 years old. I live in Traralgon and I love tech, science and coding. I think it is really fun to learn how things work and how to create new things using computers.
+
+I love coding and that is a big reason why I made this app. I wanted a project I could launch in my town and share with people. I think coding is creative and exciting because you can make nearly anything you can imagine. I wrote this app using Python.
+
+I hope this project inspires other kids to get into coding. If I can build an app in primary school then other kids can too. I want everyone to know that coding is not just for grown ups and it is really fun.
+
+Enjoy
