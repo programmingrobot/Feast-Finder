@@ -1,0 +1,38 @@
+[
+  {
+    "id": "c8fe7ae7-bd7c-4773-9c4e-320936f501d5",
+    "business_name": "Lazizz Lebanese bakery",
+    "business_address": "20 church street Traralgon",
+    "business_email": "lazziz.manoush@gmail.com",
+    "deals": "Tuesday to Saturday , meat and cheese manoush and a can of drink $7.50\n\n11am to 8pm",
+    "submitted_at": "2026-01-28 00:26",
+    "approved": false
+  },
+  {
+    "id": "36bc61f3-2e77-4c00-a4e9-8ab40a12cf23",
+    "business_name": "The Deck Traralgon",
+    "business_address": "19-23 Kay St Traralgon",
+    "business_email": "management@thedecktraralgon.com.au",
+    "deals": "Parma Night - $18 (Wednesdays)",
+    "submitted_at": "2026-01-28 01:49",
+    "approved": false
+  },
+  {
+    "id": "049dc24e-2bdd-47d9-8abb-54a7535246c2",
+    "business_name": "The leaf restaurant and bar",
+    "business_address": "22 church street, traralgon",
+    "business_email": "theleafrestaurantandbar@gmail.com",
+    "deals": "Ceylon feast lunch buffet- every Saturdays 12-3pm\n\n$30 per person",
+    "submitted_at": "2026-01-28 14:02",
+    "approved": false
+  },
+  {
+    "id": "084c07ac-0a64-46fb-bdac-17d4b2aa27b9",
+    "business_name": "Acaid Traralgon",
+    "business_address": "13/68 Hotham Street, Traralgon",
+    "business_email": "acaidtraralgon@hotmail.com",
+    "deals": "2 x Deluxe Turkish & 2 Smoothies for only $35",
+    "submitted_at": "2026-01-29 08:19",
+    "approved": false
+  }
+]
