@@ -15,6 +15,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const openInGoogleMaps = document.getElementById("openInGoogleMaps");
     const openInGoogleMapsDistance = document.getElementById("openInGoogleMapsDistance");
     const closeMapDialog = document.getElementById("closeMapDialog");
+    const dealDetailDialog = document.getElementById("dealDetailDialog");
+    const detailType = document.getElementById("detailType");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailCompany = document.getElementById("detailCompany");
+    const detailPrice = document.getElementById("detailPrice");
+    const detailDays = document.getElementById("detailDays");
+    const detailUpdated = document.getElementById("detailUpdated");
+    const detailLocation = document.getElementById("detailLocation");
+    const detailDistance = document.getElementById("detailDistance");
+    const detailMapButton = document.getElementById("detailMapButton");
+    const detailFixButton = document.getElementById("detailFixButton");
+    const closeDealDetail = document.getElementById("closeDealDetail");
     const dealSections = Array.from(document.querySelectorAll(".deal-section"));
     const dealSectionsContainer = document.getElementById("dealSectionsContainer");
     const geoPreferenceKey = "geoDealsEnabled";
@@ -65,6 +77,92 @@ document.addEventListener("DOMContentLoaded", () => {
             return `${(roundedMeters / 1000).toFixed(1)} km away`;
         }
         return `${roundedMeters} m away`;
+    }
+
+    function openMapDialog(location) {
+        if (!location || !mapDialog || !mapDialogLocation || !mapDialogStatus || !mapFrame || !openInGoogleMaps) {
+            return;
+        }
+
+        const mapQuery = encodeURIComponent(location);
+        const distanceText = formatDistance(currentDistances[location]);
+
+        mapDialogLocation.textContent = location;
+        if (mapDialogDistance) {
+            mapDialogDistance.hidden = !distanceText;
+            mapDialogDistance.textContent = distanceText;
+        }
+        mapDialogStatus.textContent = "";
+        mapFrame.src = `https://www.google.com/maps?q=${mapQuery}&z=15&output=embed`;
+        openInGoogleMaps.href = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+        openInGoogleMaps.removeAttribute("aria-disabled");
+        if (openInGoogleMapsDistance) {
+            openInGoogleMapsDistance.hidden = !distanceText;
+            openInGoogleMapsDistance.textContent = distanceText;
+        }
+        mapDialog.showModal();
+    }
+
+    function openCorrectionDialog(dealData) {
+        if (correctionDealId) correctionDealId.value = dealData.id || "";
+        if (correctionCompany) correctionCompany.value = dealData.company || "";
+        if (correctionLocation) correctionLocation.value = dealData.location || "";
+        if (correctionMessage) correctionMessage.value = "";
+        if (correctionStatus) {
+            correctionStatus.textContent = "";
+            correctionStatus.className = "status-text";
+        }
+        correctionDialog?.showModal();
+    }
+
+    function getDealDataFromCard(card) {
+        return {
+            id: card.dataset.id || "",
+            company: card.dataset.company || "",
+            description: card.dataset.description || "",
+            location: card.dataset.location || "",
+            type: card.dataset.type || "Deal",
+            days: card.dataset.days || "",
+            price: card.dataset.price || "Not listed",
+            updated: card.dataset.updated || "Current listing"
+        };
+    }
+
+    function openDealDetail(card) {
+        if (!dealDetailDialog) return;
+
+        const dealData = getDealDataFromCard(card);
+        const distanceText = formatDistance(currentDistances[dealData.location]);
+
+        if (detailType) detailType.textContent = dealData.type;
+        if (detailDescription) detailDescription.textContent = dealData.description;
+        if (detailCompany) detailCompany.textContent = dealData.company;
+        if (detailPrice) detailPrice.textContent = dealData.price || "Not listed";
+        if (detailDays) detailDays.textContent = dealData.days || "Not listed";
+        if (detailUpdated) {
+            detailUpdated.textContent = dealData.updated === "Current listing" ? dealData.updated : `Updated ${dealData.updated}`;
+        }
+        if (detailLocation) detailLocation.textContent = dealData.location || "No location listed";
+        if (detailDistance) {
+            detailDistance.hidden = !distanceText;
+            detailDistance.textContent = distanceText;
+        }
+
+        if (detailMapButton) {
+            detailMapButton.hidden = !dealData.location;
+            detailMapButton.onclick = () => {
+                dealDetailDialog.close();
+                openMapDialog(dealData.location);
+            };
+        }
+        if (detailFixButton) {
+            detailFixButton.onclick = () => {
+                dealDetailDialog.close();
+                openCorrectionDialog(dealData);
+            };
+        }
+
+        dealDetailDialog.showModal();
     }
 
     function restoreDefaultDealOrder() {
@@ -264,30 +362,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.querySelectorAll(".map-open-btn").forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
             const location = button.dataset.location || "";
-
-            if (!mapDialog || !mapDialogLocation || !mapDialogStatus || !mapFrame || !openInGoogleMaps) {
-                return;
-            }
-
-            const mapQuery = encodeURIComponent(location);
-            const distanceText = formatDistance(currentDistances[location]);
-
-            mapDialogLocation.textContent = location;
-            if (mapDialogDistance) {
-                mapDialogDistance.hidden = !distanceText;
-                mapDialogDistance.textContent = distanceText;
-            }
-            mapDialogStatus.textContent = "";
-            mapFrame.src = `https://www.google.com/maps?q=${mapQuery}&z=15&output=embed`;
-            openInGoogleMaps.href = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-            openInGoogleMaps.removeAttribute("aria-disabled");
-            if (openInGoogleMapsDistance) {
-                openInGoogleMapsDistance.hidden = !distanceText;
-                openInGoogleMapsDistance.textContent = distanceText;
-            }
-            mapDialog.showModal();
+            openMapDialog(location);
         });
     });
 
@@ -304,6 +382,23 @@ document.addEventListener("DOMContentLoaded", () => {
             openInGoogleMapsDistance.hidden = true;
             openInGoogleMapsDistance.textContent = "";
         }
+    });
+
+    document.querySelectorAll(".deal-card").forEach(card => {
+        card.addEventListener("click", () => {
+            openDealDetail(card);
+        });
+
+        card.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openDealDetail(card);
+            }
+        });
+    });
+
+    closeDealDetail?.addEventListener("click", () => {
+        dealDetailDialog?.close();
     });
 
     // --------------------------
@@ -385,16 +480,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancelCorrectionBtn = document.getElementById("cancelCorrectionBtn");
 
     document.querySelectorAll(".correction-btn").forEach(button => {
-        button.addEventListener("click", () => {
-            if (correctionDealId) correctionDealId.value = button.dataset.id || "";
-            if (correctionCompany) correctionCompany.value = button.dataset.company || "";
-            if (correctionLocation) correctionLocation.value = button.dataset.location || "";
-            if (correctionMessage) correctionMessage.value = "";
-            if (correctionStatus) {
-                correctionStatus.textContent = "";
-                correctionStatus.className = "status-text";
-            }
-            correctionDialog?.showModal();
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openCorrectionDialog({
+                id: button.dataset.id || "",
+                company: button.dataset.company || "",
+                location: button.dataset.location || ""
+            });
         });
     });
 

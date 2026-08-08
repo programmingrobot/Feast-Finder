@@ -127,7 +127,18 @@
 					<div class="deal-list">
 						{% for deal in section_deals %}
 							<div class="deal-entry" data-location="{{ deal.location or '' }}" data-original-index="{{ loop.index0 }}">
-								<div class="deal-card">
+								<div class="deal-card"
+									 role="button"
+									 tabindex="0"
+									 aria-label="View details for {{ deal.description }}"
+									 data-id="{{ deal.id }}"
+									 data-company="{{ deal.company }}"
+									 data-description="{{ deal.description }}"
+									 data-location="{{ deal.location }}"
+									 data-type="{{ deal.type }}"
+									 data-days="{{ deal.days | join(', ') }}"
+									 data-price="{{ deal.price }}"
+									 data-updated="{{ deal.updated_at }}">
 									<div class="deal-card-top">
 										<span class="meal-badge">{{ deal.type }}</span>
 										<span class="updated-badge">{{ "Updated " ~ deal.updated_at if deal.updated_at != "Current listing" else "Current listing" }}</span>
@@ -233,6 +244,48 @@
 				<button type="button" class="btn logout-btn" id="closeMapDialog">Close</button>
 			</div>
 		</div>
+</dialog>
+
+<dialog id="dealDetailDialog" class="deal-detail-dialog">
+	<div class="deal-detail-content">
+		<div class="deal-detail-header">
+			<div>
+				<span id="detailType" class="meal-badge"></span>
+				<h3 id="detailDescription"></h3>
+			</div>
+			<button type="button" class="detail-close-btn" id="closeDealDetail" aria-label="Close detail view">Close</button>
+		</div>
+
+		<div class="detail-grid">
+			<div class="detail-item">
+				<span>Business</span>
+				<strong id="detailCompany"></strong>
+			</div>
+			<div class="detail-item">
+				<span>Price</span>
+				<strong id="detailPrice"></strong>
+			</div>
+			<div class="detail-item">
+				<span>Available</span>
+				<strong id="detailDays"></strong>
+			</div>
+			<div class="detail-item">
+				<span>Status</span>
+				<strong id="detailUpdated"></strong>
+			</div>
+		</div>
+
+		<div class="detail-location-block">
+			<span>Location</span>
+			<p id="detailLocation"></p>
+			<p id="detailDistance" class="map-dialog-distance" hidden></p>
+		</div>
+
+		<div class="detail-actions">
+			<button type="button" class="btn" id="detailMapButton">Show on Maps</button>
+			<button type="button" class="btn secondary-btn" id="detailFixButton">Suggest a Fix</button>
+		</div>
+	</div>
 </dialog>
 
 <dialog id="correctionDialog">

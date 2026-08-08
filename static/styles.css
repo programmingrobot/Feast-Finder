@@ -331,12 +331,19 @@ header h1 {
     text-align: left;
     transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
     backdrop-filter: blur(10px);
+    cursor: pointer;
 }
 
-.deal-card:hover {
+.deal-card:hover,
+.deal-card:focus-visible {
     border-color: rgba(139,16,16,0.28);
     box-shadow: var(--shadow-md);
     transform: translateY(-3px);
+}
+
+.deal-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.25rem var(--brand-soft), var(--shadow-md);
 }
 
 .deal-card-top {
@@ -715,6 +722,93 @@ dialog form {
     gap: 1rem;
 }
 
+.deal-detail-dialog {
+    max-width: 680px;
+}
+
+.deal-detail-content {
+    background: var(--surface-strong);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.deal-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.deal-detail-header h3 {
+    margin: 0.65rem 0 0;
+    font-size: clamp(1.45rem, 4vw, 2.05rem);
+    line-height: 1.15;
+}
+
+.detail-close-btn {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 800;
+    padding: 0.6rem 0.9rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.detail-close-btn:hover,
+.detail-close-btn:focus-visible {
+    background: #fff4ec;
+    box-shadow: var(--shadow-md);
+    outline: none;
+    transform: translateY(-2px);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.detail-item,
+.detail-location-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,250,246,0.9));
+    padding: 0.9rem;
+}
+
+.detail-item span,
+.detail-location-block span {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.detail-item strong,
+.detail-location-block p {
+    margin: 0;
+    color: var(--text);
+}
+
+.detail-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.detail-actions .btn {
+    width: 100%;
+    text-align: center;
+}
+
 .map-dialog-location {
     margin: 0;
     color: #555;
@@ -1005,9 +1099,15 @@ dialog .btn {
 
     .quick-actions,
     .deal-card-top,
-    .deal-actions {
+    .deal-actions,
+    .deal-detail-header,
+    .detail-actions {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
     }
 
     .meal-badge,
