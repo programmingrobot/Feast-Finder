@@ -731,6 +731,7 @@ dialog form {
 
 .deal-detail-dialog {
     max-width: 680px;
+    max-height: 90vh;
 }
 
 .deal-detail-content {
@@ -741,37 +742,55 @@ dialog form {
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
+    max-height: min(86vh, 780px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .deal-detail-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    margin: -2rem -2rem 0;
+    padding: 1rem 2rem;
+    background: rgba(255,255,255,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
 }
 
-.deal-detail-header h3 {
-    margin: 0.65rem 0 0;
+.deal-detail-title {
+    margin: 0;
     font-size: clamp(1.45rem, 4vw, 2.05rem);
     line-height: 1.15;
 }
 
 .detail-close-btn {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: #fff;
-    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b00020, #d62828);
+    color: #fff;
     cursor: pointer;
     font-weight: 800;
-    padding: 0.6rem 0.9rem;
-    box-shadow: var(--shadow-sm);
+    font-size: 1.7rem;
+    line-height: 1;
+    padding: 0;
+    box-shadow: var(--shadow-md);
     transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 .detail-close-btn:hover,
 .detail-close-btn:focus-visible {
-    background: #fff4ec;
-    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, #8f001a, #b00020);
+    box-shadow: var(--shadow-lg);
     outline: none;
     transform: translateY(-2px);
 }
@@ -1117,10 +1136,15 @@ dialog .btn {
     .quick-actions,
     .deal-card-top,
     .deal-actions,
-    .deal-detail-header,
     .detail-actions {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .deal-detail-header {
+        align-items: center;
+        flex-direction: row;
+        padding: 0.85rem 1rem;
     }
 
     .detail-grid {
