@@ -755,30 +755,37 @@ dialog form {
 
 .deal-detail-content {
     background: var(--surface-strong);
-    padding: 2rem;
+    padding: 0;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
     max-height: min(86vh, 780px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: hidden;
 }
 
 .deal-detail-header {
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin: -2rem -2rem 0;
     padding: 1rem 2rem;
     background: rgba(255,255,255,0.96);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
+    box-shadow: 0 0.45rem 1rem rgba(80,40,26,0.08);
+}
+
+.deal-detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.2rem 2rem 2rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .deal-detail-title {
@@ -1164,6 +1171,10 @@ dialog .btn {
         align-items: center;
         flex-direction: row;
         padding: 0.85rem 1rem;
+    }
+
+    .deal-detail-body {
+        padding: 1rem;
     }
 
     .detail-grid {
