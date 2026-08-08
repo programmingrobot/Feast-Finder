@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort, send_from_directory
 import os, json, re, uuid
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 from functools import wraps
 import logging
 from math import asin, cos, radians, sin, sqrt
@@ -9,7 +10,7 @@ from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 from werkzeug.security import check_password_hash, generate_password_hash
 
-ADMIN_PASSWORD = "6418"
+DEFAULT_ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 
 # --- Flask/Werkzeug logging suppression ---
 log = logging.getLogger('werkzeug')
@@ -32,6 +33,9 @@ PASSWORD_FILE = os.path.join(BASE_DIR, "password.txt")
 SITE_URL = os.environ.get("SITE_URL", "https://github.com/programmingrobot/Feast-Finder")
 DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 SECTIONS = ["General", "Breakfast", "Lunch", "Dinner"]
+SEARCH_MIN_SCORE = 58
+SEARCH_RESULT_LIMIT = 50
+SEARCH_MIN_QUERY_LENGTH = 2
 
 # -----------------------------
 # INIT FILES
@@ -49,7 +53,7 @@ def init_files():
             json.dump({}, f, indent=2)
     if not os.path.exists(PASSWORD_FILE):
         with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
-            f.write(generate_password_hash(ADMIN_PASSWORD))
+            f.write(generate_password_hash(DEFAULT_ADMIN_PASSWORD) if DEFAULT_ADMIN_PASSWORD else "")
 
 init_files()
 
@@ -114,7 +118,7 @@ def check_admin_password(password):
         except ValueError:
             pass
 
-    return password == ADMIN_PASSWORD
+    return bool(DEFAULT_ADMIN_PASSWORD) and password == DEFAULT_ADMIN_PASSWORD
 
 def set_admin_password(password):
     with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
@@ -194,28 +198,76 @@ def normalize_deal_type(raw_type):
     deal_type = (raw_type or "").strip().capitalize()
     return deal_type if deal_type in SECTIONS else "General"
 
+def tokenize_search_text(text):
+    return re.findall(r"[a-z0-9]+", (text or "").lower())
+
+def score_search_match(search_query, search_text):
+    query = (search_query or "").strip()
+    text = search_text or ""
+    if not query:
+        return 0
+    if len(query) < SEARCH_MIN_QUERY_LENGTH:
+        return 0
+
+    if query in text:
+        return 100
+
+    query_lower = query.lower()
+    text_lower = text.lower()
+    if query_lower in text_lower:
+        return 90
+
+    query_words = tokenize_search_text(query)
+    text_words = tokenize_search_text(text)
+    if not query_words or not text_words:
+        return 0
+
+    word_scores = []
+    for query_word in query_words:
+        best_score = 0
+        for text_word in text_words:
+            if query_word == text_word:
+                best_score = 1
+                break
+            if text_word.startswith(query_word) or query_word.startswith(text_word):
+                best_score = max(best_score, 0.86)
+                continue
+            best_score = max(best_score, SequenceMatcher(None, query_word, text_word).ratio())
+        word_scores.append(best_score)
+
+    if min(word_scores) < 0.62:
+        return 0
+
+    average_word_score = sum(word_scores) / len(word_scores)
+    phrase_score = SequenceMatcher(None, query_lower, text_lower).ratio()
+    score = int(round((average_word_score * 0.82 + phrase_score * 0.18) * 100))
+    return score if score >= SEARCH_MIN_SCORE else 0
+
 def deal_matches_filters(deal, company, location, meal_filter, price_filter, tag_filter, search_query):
     description = deal.get("text", "")
     deal_type = normalize_deal_type(deal.get("type", ""))
-    haystack = f"{description} {company} {location}".lower()
+    haystack = f"{description} {company} {location} {deal_type} {' '.join(deal.get('days', []))}"
+    haystack_lower = haystack.lower()
 
     if meal_filter != "All" and deal_type != meal_filter:
-        return False
+        return False, 0
 
     lowest_price = extract_lowest_price(description)
     if price_filter == "under15" and (lowest_price is None or lowest_price > 15):
-        return False
+        return False, 0
 
-    if tag_filter == "kids" and "kid" not in haystack:
-        return False
+    if tag_filter == "kids" and "kid" not in haystack_lower:
+        return False, 0
 
-    if search_query and search_query.lower() not in haystack:
-        return False
+    search_score = score_search_match(search_query, haystack)
+    if search_query and search_score == 0:
+        return False, 0
 
-    return True
+    return True, search_score
 
 def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag_filter, search_query):
     grouped_results = {section: [] for section in SECTIONS}
+    matched_deals = []
     data_changed = False
 
     for company in sorted(deals_data.keys(), key=lambda x: (x or "").lower()):
@@ -230,12 +282,21 @@ def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag
             if selected_day not in deal.get("days", []):
                 continue
 
-            if not deal_matches_filters(deal, company, location, meal_filter, price_filter, tag_filter, search_query):
+            matches_filters, search_score = deal_matches_filters(
+                deal,
+                company,
+                location,
+                meal_filter,
+                price_filter,
+                tag_filter,
+                search_query
+            )
+            if not matches_filters:
                 continue
 
             lowest_price = extract_lowest_price(deal.get("text", ""))
             deal_type = normalize_deal_type(deal.get("type", ""))
-            grouped_results[deal_type].append({
+            matched_deals.append({
                 "id": deal["id"],
                 "company": company,
                 "description": deal.get("text", ""),
@@ -243,11 +304,21 @@ def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag
                 "type": deal_type,
                 "days": deal.get("days", []),
                 "price": format_price(lowest_price),
-                "updated_at": deal.get("updated_at", "Current listing")
+                "updated_at": deal.get("updated_at", "Current listing"),
+                "search_score": search_score
             })
 
     if data_changed:
         save_deals(deals_data)
+
+    if search_query:
+        matched_deals = sorted(
+            matched_deals,
+            key=lambda deal: (-deal["search_score"], deal["company"].lower(), deal["description"].lower())
+        )[:SEARCH_RESULT_LIMIT]
+
+    for deal in matched_deals:
+        grouped_results[deal["type"]].append(deal)
 
     return grouped_results
 
