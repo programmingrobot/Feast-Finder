@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const perPageSelect = document.getElementById("perPageSelect");
     const mealFilter = document.getElementById("mealFilter");
     const priceFilter = document.getElementById("priceFilter");
+    const customPriceField = document.getElementById("customPriceField");
+    const customPriceInput = document.getElementById("customPriceInput");
     const tagFilter = document.getElementById("tagFilter");
     const geoToggleButton = document.getElementById("geoToggleButton");
     const geoStatus = document.getElementById("geoStatus");
@@ -50,9 +52,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (perPageSelect) url.searchParams.set("per_page", perPageSelect.value);
         if (mealFilter) url.searchParams.set("meal", mealFilter.value);
         if (priceFilter) url.searchParams.set("price", priceFilter.value);
+        if (customPriceInput && priceFilter?.value === "custom" && customPriceInput.value) {
+            url.searchParams.set("custom_price", customPriceInput.value);
+        } else {
+            url.searchParams.delete("custom_price");
+        }
         if (tagFilter) url.searchParams.set("tag", tagFilter.value);
         url.searchParams.set("page", 1);
         window.location.href = url.toString();
+    }
+
+    function syncCustomPriceField() {
+        if (!customPriceField || !priceFilter) return;
+        const showCustomPrice = priceFilter.value === "custom";
+        customPriceField.hidden = !showCustomPrice;
+        if (customPriceInput) {
+            customPriceInput.disabled = !showCustomPrice;
+        }
     }
 
     function setGeoButtonState(enabled) {
@@ -363,8 +379,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Page size change → reload page
     perPageSelect?.addEventListener("change", applyFilters);
     mealFilter?.addEventListener("change", applyFilters);
-    priceFilter?.addEventListener("change", applyFilters);
+    priceFilter?.addEventListener("change", () => {
+        syncCustomPriceField();
+        if (priceFilter.value !== "custom") {
+            applyFilters();
+        } else {
+            customPriceInput?.focus();
+        }
+    });
+    customPriceInput?.addEventListener("change", applyFilters);
     tagFilter?.addEventListener("change", applyFilters);
+    syncCustomPriceField();
 
     geoToggleButton?.addEventListener("click", async () => {
         const enable = geoToggleButton.getAttribute("aria-pressed") !== "true";

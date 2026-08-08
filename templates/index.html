@@ -85,8 +85,26 @@
 						<span>Price</span>
 						<select id="priceFilter" name="price">
 							<option value="" {% if not price_filter %}selected{% endif %}>Any price</option>
+							<option value="under10" {% if price_filter == "under10" %}selected{% endif %}>$10 and under</option>
 							<option value="under15" {% if price_filter == "under15" %}selected{% endif %}>$15 and under</option>
+							<option value="under20" {% if price_filter == "under20" %}selected{% endif %}>$20 and under</option>
+							<option value="under25" {% if price_filter == "under25" %}selected{% endif %}>$25 and under</option>
+							<option value="under30" {% if price_filter == "under30" %}selected{% endif %}>$30 and under</option>
+							<option value="over30" {% if price_filter == "over30" %}selected{% endif %}>$30+</option>
+							<option value="custom" {% if price_filter == "custom" %}selected{% endif %}>Custom max</option>
 						</select>
+					</label>
+
+					<label class="custom-price-field" id="customPriceField">
+						<span>Max $</span>
+						<input id="customPriceInput"
+							   type="number"
+							   name="custom_price"
+							   min="1"
+							   max="500"
+							   step="1"
+							   value="{{ custom_price or '' }}"
+							   placeholder="e.g. 18">
 					</label>
 
 					<label>
@@ -206,14 +224,14 @@
 
 	<div class="pagination-controls">
 		{% if page > 1 %}
-			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page - 1 }}&per_page={{ per_page }}">Prev</a>
+			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&custom_price={{ custom_price or '' }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page - 1 }}&per_page={{ per_page }}">Prev</a>
 		{% endif %}
 
 		<span>Page {{ page }}</span>
 
 		{% set max_pages = total_pages_per_section.values() | max %}
 		{% if page < max_pages %}
-			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page + 1 }}&per_page={{ per_page }}">Next</a>
+			<a class="page-btn" href="{{ request.path }}?day={{ selected_day | urlencode }}&meal={{ meal_filter | urlencode }}&price={{ price_filter | urlencode }}&custom_price={{ custom_price or '' }}&tag={{ tag_filter | urlencode }}&q={{ search_query | urlencode }}&page={{ page + 1 }}&per_page={{ per_page }}">Next</a>
 		{% endif %}
 	</div>
 

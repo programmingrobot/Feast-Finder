@@ -36,6 +36,14 @@ SECTIONS = ["General", "Breakfast", "Lunch", "Dinner"]
 SEARCH_MIN_SCORE = 58
 SEARCH_RESULT_LIMIT = 50
 SEARCH_MIN_QUERY_LENGTH = 2
+PRICE_FILTERS = {
+    "under10": {"max": 10},
+    "under15": {"max": 15},
+    "under20": {"max": 20},
+    "under25": {"max": 25},
+    "under30": {"max": 30},
+    "over30": {"min": 30},
+}
 
 # -----------------------------
 # INIT FILES
@@ -198,6 +206,35 @@ def normalize_deal_type(raw_type):
     deal_type = (raw_type or "").strip().capitalize()
     return deal_type if deal_type in SECTIONS else "General"
 
+def parse_custom_price(raw_price):
+    try:
+        price = float(raw_price)
+    except (TypeError, ValueError):
+        return None
+    if price <= 0:
+        return None
+    return min(price, 500)
+
+def price_matches_filter(lowest_price, price_filter, custom_price):
+    if not price_filter:
+        return True
+
+    if lowest_price is None:
+        return False
+
+    if price_filter == "custom":
+        return custom_price is not None and lowest_price <= custom_price
+
+    rule = PRICE_FILTERS.get(price_filter)
+    if not rule:
+        return True
+
+    if "min" in rule and lowest_price < rule["min"]:
+        return False
+    if "max" in rule and lowest_price > rule["max"]:
+        return False
+    return True
+
 def tokenize_search_text(text):
     return re.findall(r"[a-z0-9]+", (text or "").lower())
 
@@ -243,7 +280,7 @@ def score_search_match(search_query, search_text):
     score = int(round((average_word_score * 0.82 + phrase_score * 0.18) * 100))
     return score if score >= SEARCH_MIN_SCORE else 0
 
-def deal_matches_filters(deal, company, location, meal_filter, price_filter, tag_filter, search_query):
+def deal_matches_filters(deal, company, location, meal_filter, price_filter, custom_price, tag_filter, search_query):
     description = deal.get("text", "")
     deal_type = normalize_deal_type(deal.get("type", ""))
     haystack = f"{description} {company} {location} {deal_type} {' '.join(deal.get('days', []))}"
@@ -253,7 +290,7 @@ def deal_matches_filters(deal, company, location, meal_filter, price_filter, tag
         return False, 0
 
     lowest_price = extract_lowest_price(description)
-    if price_filter == "under15" and (lowest_price is None or lowest_price > 15):
+    if not price_matches_filter(lowest_price, price_filter, custom_price):
         return False, 0
 
     if tag_filter == "kids" and "kid" not in haystack_lower:
@@ -265,7 +302,7 @@ def deal_matches_filters(deal, company, location, meal_filter, price_filter, tag
 
     return True, search_score
 
-def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag_filter, search_query):
+def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, custom_price, tag_filter, search_query):
     grouped_results = {section: [] for section in SECTIONS}
     matched_deals = []
     data_changed = False
@@ -288,6 +325,7 @@ def build_grouped_deals(deals_data, selected_day, meal_filter, price_filter, tag
                 location,
                 meal_filter,
                 price_filter,
+                custom_price,
                 tag_filter,
                 search_query
             )
@@ -335,8 +373,11 @@ def render_deals(default_meal="All", default_tag="", default_q="", page_title="L
         meal_filter = "All"
 
     price_filter = request.args.get("price", "")
-    if price_filter not in ["", "under15"]:
+    if price_filter not in ["", "custom"] + list(PRICE_FILTERS.keys()):
         price_filter = ""
+    custom_price = parse_custom_price(request.args.get("custom_price", ""))
+    if price_filter != "custom":
+        custom_price = None
 
     tag_filter = request.args.get("tag", default_tag)
     if tag_filter not in ["", "kids"]:
@@ -354,6 +395,7 @@ def render_deals(default_meal="All", default_tag="", default_q="", page_title="L
         selected_day,
         meal_filter,
         price_filter,
+        custom_price,
         tag_filter,
         search_query
     )
@@ -387,6 +429,7 @@ def render_deals(default_meal="All", default_tag="", default_q="", page_title="L
         sections=SECTIONS,
         meal_filter=meal_filter,
         price_filter=price_filter,
+        custom_price=custom_price,
         tag_filter=tag_filter,
         search_query=search_query,
         total_deals=total_deals,
