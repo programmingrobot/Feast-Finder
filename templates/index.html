@@ -168,7 +168,7 @@
 												data-id="{{ deal.id }}"
 												data-company="{{ deal.company }}"
 												data-location="{{ deal.location }}">
-											Suggest a Fix
+											Report
 										</button>
 									</div>
 								</div>
@@ -279,18 +279,24 @@
 			<span>Location</span>
 			<p id="detailLocation"></p>
 			<p id="detailDistance" class="map-dialog-distance" hidden></p>
+			<iframe id="detailMapFrame"
+					class="detail-map-frame"
+					title="Deal location map"
+					loading="lazy"
+					referrerpolicy="no-referrer-when-downgrade"
+					hidden></iframe>
 		</div>
 
 		<div class="detail-actions">
 			<button type="button" class="btn" id="detailMapButton">Show on Maps</button>
-			<button type="button" class="btn secondary-btn" id="detailFixButton">Suggest a Fix</button>
+			<button type="button" class="btn secondary-btn" id="detailFixButton">Report</button>
 		</div>
 	</div>
 </dialog>
 
 <dialog id="correctionDialog">
 	<form id="correctionForm">
-		<h3>Suggest a Fix</h3>
+		<h3>Report a Deal</h3>
 		<input type="hidden" id="correctionDealId">
 		<input type="hidden" id="correctionCompany">
 		<input type="hidden" id="correctionLocation">
@@ -299,7 +305,7 @@
 				  rows="5"
 				  required></textarea>
 		<div>
-			<button type="submit" class="btn">Send Fix</button>
+			<button type="submit" class="btn">Send Report</button>
 			<button type="button" class="btn logout-btn" id="cancelCorrectionBtn">Cancel</button>
 		</div>
 		<p id="correctionStatus" class="status-text"></p>

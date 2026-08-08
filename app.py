@@ -477,7 +477,7 @@ def submit_deal():
 def suggest_correction():
     data = request.get_json(silent=True) or {}
     if not all(data.get(k) for k in ("deal_id", "message")):
-        return jsonify(success=False, error="Tell us what needs fixing"), 400
+        return jsonify(success=False, error="Tell us what you want to report"), 400
 
     messages = load_messages()
     messages.append({

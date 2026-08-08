@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const detailUpdated = document.getElementById("detailUpdated");
     const detailLocation = document.getElementById("detailLocation");
     const detailDistance = document.getElementById("detailDistance");
+    const detailMapFrame = document.getElementById("detailMapFrame");
     const detailMapButton = document.getElementById("detailMapButton");
     const detailFixButton = document.getElementById("detailFixButton");
     const closeDealDetail = document.getElementById("closeDealDetail");
@@ -146,6 +147,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (detailDistance) {
             detailDistance.hidden = !distanceText;
             detailDistance.textContent = distanceText;
+        }
+        if (detailMapFrame) {
+            if (dealData.location) {
+                detailMapFrame.hidden = false;
+                detailMapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(dealData.location)}&z=15&output=embed`;
+            } else {
+                detailMapFrame.hidden = true;
+                detailMapFrame.removeAttribute("src");
+            }
         }
 
         if (detailMapButton) {
@@ -401,6 +411,10 @@ document.addEventListener("DOMContentLoaded", () => {
         dealDetailDialog?.close();
     });
 
+    dealDetailDialog?.addEventListener("close", () => {
+        detailMapFrame?.removeAttribute("src");
+    });
+
     // --------------------------
     // DEAL SUBMISSION MODAL
     // --------------------------
@@ -498,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
 
         if (correctionStatus) {
-            correctionStatus.textContent = "Sending your fix...";
+            correctionStatus.textContent = "Sending your report...";
             correctionStatus.className = "status-text";
         }
 
@@ -515,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await response.json();
             if (!response.ok || !data.success) {
-                throw new Error(data.error || "Could not send the fix");
+                throw new Error(data.error || "Could not send the report");
             }
             if (correctionStatus) {
                 correctionStatus.textContent = "Thanks. We will check it.";
@@ -524,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
             correctionForm.reset();
         } catch (error) {
             if (correctionStatus) {
-                correctionStatus.textContent = error.message || "Could not send the fix.";
+                correctionStatus.textContent = error.message || "Could not send the report.";
                 correctionStatus.classList.add("error");
             }
         }
