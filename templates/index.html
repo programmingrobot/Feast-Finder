@@ -42,6 +42,14 @@
 	</div>
 
 	<div class="header-buttons">
+		<button type="button"
+				class="gps-btn"
+				id="openLocationSettings"
+				aria-label="Location settings"
+				aria-pressed="false"
+				title="Location settings">
+			<span class="gps-mark" aria-hidden="true"></span>
+		</button>
 		<a href="{{ url_for('about_us') }}" class="info-btn" title="See the About Us page">
 			<img src="{{ url_for('static', filename='about_us.png') }}" alt="About Us">
 		</a>
@@ -216,11 +224,6 @@
 		<div class="filter-bar">
 
 			<button class="btn" id="openDealModalBottom">Request Deals</button>
-			<div class="geo-controls">
-				<span class="geo-label">Near Me</span>
-				<button type="button" class="btn geo-toggle-btn" id="geoToggleButton" aria-pressed="false">Off</button>
-			</div>
-			<span id="geoStatus" class="geo-status" aria-live="polite"></span>
 
 	<div class="pagination-controls">
 		{% if page > 1 %}
@@ -236,6 +239,40 @@
 	</div>
 
 </div>
+
+<dialog id="locationDialog" class="location-dialog">
+	<div class="location-modal-content">
+		<div class="location-modal-header">
+			<h3>Location Settings</h3>
+			<div class="location-info-wrap">
+				<button type="button"
+						class="location-info-btn"
+						aria-describedby="locationInfoText"
+						aria-label="How location works">i</button>
+				<p id="locationInfoText" class="location-info-text">
+					When location is enabled, the app tries to access your location each time it opens so nearby deals can be sorted first.
+				</p>
+			</div>
+		</div>
+
+		<div class="location-radio-group" role="radiogroup" aria-label="Location access">
+			<label>
+				<input type="radio" name="locationPreference" id="locationEnableRadio" value="on">
+				<span>Enable location</span>
+			</label>
+			<label>
+				<input type="radio" name="locationPreference" id="locationDisableRadio" value="off">
+				<span>Disable location</span>
+			</label>
+		</div>
+
+		<p id="geoStatus" class="geo-status" aria-live="polite"></p>
+
+		<div class="location-modal-actions">
+			<button type="button" class="btn logout-btn" id="closeLocationSettings">Close</button>
+		</div>
+	</div>
+</dialog>
 
 <dialog id="mapDialog" class="map-dialog">
 		<div class="map-modal-content">

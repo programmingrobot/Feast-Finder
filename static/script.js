@@ -7,7 +7,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const customPriceField = document.getElementById("customPriceField");
     const customPriceInput = document.getElementById("customPriceInput");
     const tagFilter = document.getElementById("tagFilter");
-    const geoToggleButton = document.getElementById("geoToggleButton");
+    const locationSettingsButton = document.getElementById("openLocationSettings");
+    const locationDialog = document.getElementById("locationDialog");
+    const closeLocationSettings = document.getElementById("closeLocationSettings");
+    const locationEnableRadio = document.getElementById("locationEnableRadio");
+    const locationDisableRadio = document.getElementById("locationDisableRadio");
     const geoStatus = document.getElementById("geoStatus");
     const mapDialog = document.getElementById("mapDialog");
     const mapDialogLocation = document.getElementById("mapDialogLocation");
@@ -72,10 +76,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setGeoButtonState(enabled) {
-        if (!geoToggleButton) return;
-        geoToggleButton.textContent = enabled ? "On" : "Off";
-        geoToggleButton.setAttribute("aria-pressed", enabled ? "true" : "false");
-        geoToggleButton.classList.toggle("is-on", enabled);
+        if (locationSettingsButton) {
+            locationSettingsButton.setAttribute("aria-pressed", enabled ? "true" : "false");
+            locationSettingsButton.classList.toggle("is-on", enabled);
+            locationSettingsButton.title = enabled ? "Location sorting is enabled" : "Location settings";
+        }
+        if (locationEnableRadio) {
+            locationEnableRadio.checked = enabled;
+        }
+        if (locationDisableRadio) {
+            locationDisableRadio.checked = !enabled;
+        }
     }
 
     function setGeoStatus(message) {
@@ -391,9 +402,26 @@ document.addEventListener("DOMContentLoaded", () => {
     tagFilter?.addEventListener("change", applyFilters);
     syncCustomPriceField();
 
-    geoToggleButton?.addEventListener("click", async () => {
-        const enable = geoToggleButton.getAttribute("aria-pressed") !== "true";
-        await setNearMeMode(enable);
+    locationSettingsButton?.addEventListener("click", () => {
+        const enabled = localStorage.getItem(geoPreferenceKey) === "on";
+        setGeoButtonState(enabled);
+        locationDialog?.showModal();
+    });
+
+    closeLocationSettings?.addEventListener("click", () => {
+        locationDialog?.close();
+    });
+
+    locationEnableRadio?.addEventListener("change", async () => {
+        if (locationEnableRadio.checked) {
+            await setNearMeMode(true);
+        }
+    });
+
+    locationDisableRadio?.addEventListener("change", async () => {
+        if (locationDisableRadio.checked) {
+            await setNearMeMode(false);
+        }
     });
 
     document.querySelectorAll(".map-open-btn").forEach(button => {
