@@ -31,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const detailLocation = document.getElementById("detailLocation");
     const detailDistance = document.getElementById("detailDistance");
     const detailMapFrame = document.getElementById("detailMapFrame");
-    const detailMapButton = document.getElementById("detailMapButton");
     const detailFixButton = document.getElementById("detailFixButton");
     const closeDealDetail = document.getElementById("closeDealDetail");
     const dealSections = Array.from(document.querySelectorAll(".deal-section"));
@@ -185,13 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (detailMapButton) {
-            detailMapButton.hidden = !dealData.location;
-            detailMapButton.onclick = () => {
-                dealDetailDialog.close();
-                openMapDialog(dealData.location);
-            };
-        }
         if (detailFixButton) {
             detailFixButton.onclick = () => {
                 dealDetailDialog.close();
