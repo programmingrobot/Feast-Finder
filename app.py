@@ -5,6 +5,7 @@ from difflib import SequenceMatcher
 from functools import wraps
 import logging
 from math import asin, cos, radians, sin, sqrt
+import tempfile
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
@@ -83,10 +84,24 @@ def load_json_file(path, default):
 def save_json_file(path, data):
     directory = os.path.dirname(path) or "."
     os.makedirs(directory, exist_ok=True)
-    temp_path = f"{path}.tmp"
-    with open(temp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(temp_path, path)
+    temp_fd, temp_path = tempfile.mkstemp(
+        prefix=f".{os.path.basename(path)}.",
+        suffix=".tmp",
+        dir=directory,
+        text=True
+    )
+    try:
+        with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+    except OSError:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+        raise
 
 def load_deals():
     return load_json_file(DEALS_FILE, {})
