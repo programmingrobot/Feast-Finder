@@ -858,13 +858,15 @@ dialog form {
     opacity: 0;
     pointer-events: none;
     transform: translateY(-0.35rem);
-    transition: opacity var(--transition), transform var(--transition);
+    transition:
+        opacity var(--transition) 0s,
+        transform var(--transition) 0s;
 }
 
-.location-info-wrap:hover .location-info-text,
-.location-info-btn:focus + .location-info-text {
+.location-info-wrap:hover .location-info-text {
     opacity: 1;
     transform: translateY(0);
+    transition-delay: 1s;
 }
 
 .location-radio-group {
