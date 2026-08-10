@@ -663,7 +663,9 @@ def change_password():
 @block_bots
 def admin_panel():
     companies = load_deals()
-    messages = sorted(load_messages(), key=lambda m: m["submitted_at"], reverse=True)
+    all_messages = sorted(load_messages(), key=lambda m: m.get("submitted_at", ""), reverse=True)
+    reports = [message for message in all_messages if message.get("type") == "correction"]
+    messages = [message for message in all_messages if message.get("type") != "correction"]
 
     companies = dict(sorted(companies.items(), key=lambda i: (i[0] or "").lower()))
     for c in companies:
@@ -672,7 +674,7 @@ def admin_panel():
             key=lambda d: (d.get("text") or "").lower()
         )
 
-    return render_template("admin.html", companies=companies, messages=messages)
+    return render_template("admin.html", companies=companies, messages=messages, reports=reports)
 
 @app.route("/admin/add_company", methods=["POST"])
 @admin_required

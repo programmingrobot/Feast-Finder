@@ -34,7 +34,6 @@
             <div class="message-card">
                 <div class="message-header">
                     <strong>{{ msg.business_name }}</strong>
-                    <span class="timestamp">{{ msg.submitted_at }}</span>
                     <button class="delete-message-btn" data-id="{{ msg.id }}">Delete</button>
                 </div>
                 <p><strong>Email:</strong> {{ msg.business_email }}</p>
@@ -95,6 +94,29 @@
         </div>
 
     </main>
+
+    <!-- RIGHT: REPORTS -->
+    <aside class="reports-panel">
+        <h2>Reports</h2>
+        <div class="messages-list">
+            {% for report in reports %}
+            <div class="message-card report-card">
+                <div class="message-header">
+                    <strong>{{ report.business_name }}</strong>
+                    <button class="delete-message-btn" data-id="{{ report.id }}">Delete</button>
+                </div>
+                {% if report.business_address %}
+                <p><strong>Location:</strong> {{ report.business_address }}</p>
+                {% endif %}
+                <p><strong>Report:</strong><br>{{ report.deals }}</p>
+            </div>
+            {% else %}
+            <div class="message-card empty-report-card">
+                <p>No reports yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
 </div>
 
 <!-- ================= MODALS ================= -->

@@ -132,7 +132,8 @@ a > button {
 /* ==========================
    MESSAGES PANEL (LEFT SIDEBAR)
 ========================== */
-.messages-panel {
+.messages-panel,
+.reports-panel {
     width: 20%;
     min-width: 17rem;
     height: calc(100vh - var(--header-height) - 3.5rem);
@@ -152,7 +153,13 @@ a > button {
     overflow-y: auto;
 }
 
-.messages-panel h2 {
+.reports-panel {
+    right: 1.5rem;
+    left: auto;
+}
+
+.messages-panel h2,
+.reports-panel h2 {
     margin-top: 0;
     margin-bottom: 1rem;
     font-size: 1.3rem;
@@ -204,6 +211,15 @@ a > button {
     white-space: pre-wrap;
 }
 
+.report-card {
+    border-left: 0.3rem solid var(--brand);
+}
+
+.empty-report-card {
+    color: #666;
+    text-align: center;
+}
+
 /* Delete (X) button */
 .delete-message-btn {
     position: absolute;
@@ -231,8 +247,9 @@ a > button {
 ========================== */
 .admin-main {
     width: 100%;
-    max-width: 90rem;
+    max-width: 72rem;
     margin-left: 23%;
+    margin-right: 23%;
     padding-bottom: 4rem;
 }
 
@@ -489,8 +506,16 @@ select:focus {
         margin-bottom: 1.5rem;
     }
 
+    .reports-panel {
+        position: static;
+        width: 100%;
+        height: auto;
+        margin-bottom: 1.5rem;
+    }
+
     .admin-main {
         margin-left: 0;
+        margin-right: 0;
     }
 
     .deal-row {
