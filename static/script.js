@@ -132,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openCorrectionDialog(dealData) {
         if (correctionDealId) correctionDealId.value = dealData.id || "";
+        if (correctionDealText) correctionDealText.value = dealData.description || "";
         if (correctionCompany) correctionCompany.value = dealData.company || "";
         if (correctionLocation) correctionLocation.value = dealData.location || "";
         if (correctionMessage) correctionMessage.value = "";
@@ -532,6 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const correctionDialog = document.getElementById("correctionDialog");
     const correctionForm = document.getElementById("correctionForm");
     const correctionDealId = document.getElementById("correctionDealId");
+    const correctionDealText = document.getElementById("correctionDealText");
     const correctionCompany = document.getElementById("correctionCompany");
     const correctionLocation = document.getElementById("correctionLocation");
     const correctionMessage = document.getElementById("correctionMessage");
@@ -543,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
             event.stopPropagation();
             openCorrectionDialog({
                 id: button.dataset.id || "",
+                description: button.dataset.description || "",
                 company: button.dataset.company || "",
                 location: button.dataset.location || ""
             });
@@ -567,6 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     deal_id: correctionDealId?.value || "",
+                    deal_text: correctionDealText?.value || "",
                     company: correctionCompany?.value || "",
                     location: correctionLocation?.value || "",
                     message: correctionMessage?.value || ""

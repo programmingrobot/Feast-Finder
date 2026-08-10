@@ -221,6 +221,22 @@ def normalize_deal_type(raw_type):
     deal_type = (raw_type or "").strip().capitalize()
     return deal_type if deal_type in SECTIONS else "General"
 
+def find_deal_context(deal_id):
+    wanted_id = str(deal_id or "").strip()
+    if not wanted_id:
+        return {}
+
+    for company, info in load_deals().items():
+        location = info.get("Details", {}).get("location", "")
+        for deal in info.get("Deals", []):
+            if str(deal.get("id")) == wanted_id:
+                return {
+                    "company": company,
+                    "location": location,
+                    "text": deal.get("text", "")
+                }
+    return {}
+
 def parse_custom_price(raw_price):
     try:
         price = float(raw_price)
@@ -537,13 +553,19 @@ def suggest_correction():
     if not all(data.get(k) for k in ("deal_id", "message")):
         return jsonify(success=False, error="Tell us what you want to report"), 400
 
+    deal_context = find_deal_context(data.get("deal_id"))
+    company = (deal_context.get("company") or data.get("company") or "Deal report").strip()
+    location = (deal_context.get("location") or data.get("location") or "").strip()
+    deal_text = (deal_context.get("text") or data.get("deal_text") or "Unknown deal").strip()
+    report_text = f"{deal_text}: {data['message'].strip()}"
+
     messages = load_messages()
     messages.append({
         "id": str(uuid.uuid4()),
-        "business_name": data.get("company", "Deal correction").strip(),
-        "business_address": data.get("location", "").strip(),
+        "business_name": company,
+        "business_address": location,
         "business_email": data.get("email", "correction@visitor.local").strip(),
-        "deals": f"Correction for deal {data['deal_id']}: {data['message'].strip()}",
+        "deals": report_text,
         "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "approved": False,
         "type": "correction"

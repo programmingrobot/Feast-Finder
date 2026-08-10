@@ -193,7 +193,8 @@
 												class="correction-btn"
 												data-id="{{ deal.id }}"
 												data-company="{{ deal.company }}"
-												data-location="{{ deal.location }}">
+												data-location="{{ deal.location }}"
+												data-description="{{ deal.description }}">
 											Report
 										</button>
 									</div>
@@ -353,6 +354,7 @@
 	<form id="correctionForm">
 		<h3>Report a Deal</h3>
 		<input type="hidden" id="correctionDealId">
+		<input type="hidden" id="correctionDealText">
 		<input type="hidden" id="correctionCompany">
 		<input type="hidden" id="correctionLocation">
 		<textarea id="correctionMessage"
