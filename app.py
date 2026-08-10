@@ -237,6 +237,20 @@ def find_deal_context(deal_id):
                 }
     return {}
 
+def get_report_display_text(report):
+    report_text = report.get("deals", "")
+    old_format = re.match(r"^Correction for deal ([^:]+):\s*(.*)$", report_text)
+    if not old_format:
+        return report_text
+
+    deal_context = find_deal_context(old_format.group(1))
+    deal_text = deal_context.get("text")
+    if not deal_text:
+        return report_text
+
+    message = old_format.group(2).strip()
+    return f"{deal_text}: {message}" if message else deal_text
+
 def parse_custom_price(raw_price):
     try:
         price = float(raw_price)
@@ -688,6 +702,8 @@ def admin_panel():
     all_messages = sorted(load_messages(), key=lambda m: m.get("submitted_at", ""), reverse=True)
     reports = [message for message in all_messages if message.get("type") == "correction"]
     messages = [message for message in all_messages if message.get("type") != "correction"]
+    for report in reports:
+        report["display_deals"] = get_report_display_text(report)
 
     companies = dict(sorted(companies.items(), key=lambda i: (i[0] or "").lower()))
     for c in companies:

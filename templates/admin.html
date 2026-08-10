@@ -108,7 +108,7 @@
                 {% if report.business_address %}
                 <p><strong>Location:</strong> {{ report.business_address }}</p>
                 {% endif %}
-                <p><strong>Report:</strong><br>{{ report.deals }}</p>
+                <p><strong>Report:</strong><br>{{ report.display_deals or report.deals }}</p>
             </div>
             {% else %}
             <div class="message-card empty-report-card">
