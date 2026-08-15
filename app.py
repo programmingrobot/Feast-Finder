@@ -6,6 +6,7 @@ from functools import wraps
 import logging
 from math import asin, cos, radians, sin, sqrt
 import tempfile
+import time
 from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
@@ -60,6 +61,9 @@ SITE_URL = os.environ.get("SITE_URL", "https://github.com/programmingrobot/Feast
 RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY", "").strip()
 RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "").strip()
 RECAPTCHA_MIN_SCORE = float(os.environ.get("RECAPTCHA_MIN_SCORE", "0.5"))
+LOGIN_MAX_FAILED_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 60
+LOGIN_ATTEMPTS = {}
 DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 SECTIONS = ["General", "Breakfast", "Lunch", "Dinner"]
 SEARCH_MIN_SCORE = 58
@@ -174,6 +178,39 @@ def check_admin_password(password):
 def set_admin_password(password):
     with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
         f.write(generate_password_hash(password))
+
+def get_client_ip():
+    return request.access_route[0] if request.access_route else (request.remote_addr or "unknown")
+
+def get_login_lockout_seconds(client_ip):
+    attempt = LOGIN_ATTEMPTS.get(client_ip)
+    if not attempt:
+        return 0
+
+    locked_until = attempt.get("locked_until", 0)
+    if not locked_until:
+        return 0
+
+    remaining = int(locked_until - time.time())
+    if remaining <= 0:
+        LOGIN_ATTEMPTS.pop(client_ip, None)
+        return 0
+
+    return remaining
+
+def record_failed_login(client_ip):
+    now = time.time()
+    attempt = LOGIN_ATTEMPTS.get(client_ip, {"count": 0, "locked_until": 0})
+    attempt["count"] = attempt.get("count", 0) + 1
+
+    if attempt["count"] >= LOGIN_MAX_FAILED_ATTEMPTS:
+        attempt["count"] = 0
+        attempt["locked_until"] = now + LOGIN_LOCKOUT_SECONDS
+
+    LOGIN_ATTEMPTS[client_ip] = attempt
+
+def clear_failed_logins(client_ip):
+    LOGIN_ATTEMPTS.pop(client_ip, None)
 
 def verify_recaptcha(token, remote_ip=None):
     if not RECAPTCHA_SITE_KEY or not RECAPTCHA_SECRET_KEY:
@@ -724,16 +761,22 @@ def login():
     error = None
 
     if request.method == "POST":
+        client_ip = get_client_ip()
         password = request.form.get("password", "")
         recaptcha_token = request.form.get("g-recaptcha-response", "")
+        lockout_seconds = get_login_lockout_seconds(client_ip)
 
-        if not verify_recaptcha(recaptcha_token, request.remote_addr):
+        if lockout_seconds:
+            error = f"Too many incorrect attempts. Please try again in {lockout_seconds} seconds."
+        elif not verify_recaptcha(recaptcha_token, client_ip):
             error = "reCAPTCHA verification failed. Please try again."
         elif check_admin_password(password):
+            clear_failed_logins(client_ip)
             session.permanent = True
             session["admin_logged_in"] = True
             return redirect(url_for("admin_panel"))
         else:
+            record_failed_login(client_ip)
             error = "Incorrect password."
 
     return render_template("login.html", error=error, recaptcha_site_key=RECAPTCHA_SITE_KEY)
