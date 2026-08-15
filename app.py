@@ -44,7 +44,11 @@ app = Flask(__name__)
 # -----------------------------
 # CONFIG
 # -----------------------------
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    log.warning("SECRET_KEY is not set; using a temporary key for this process.")
+    SECRET_KEY = os.urandom(32)
+app.secret_key = SECRET_KEY
 app.permanent_session_lifetime = timedelta(days=7)
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
