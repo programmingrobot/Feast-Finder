@@ -11,6 +11,28 @@ from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 from werkzeug.security import check_password_hash, generate_password_hash
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def load_dotenv_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return
+
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+load_dotenv_file(os.path.join(BASE_DIR, ".env"))
+
 DEFAULT_ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 
 # --- Flask/Werkzeug logging suppression ---
@@ -25,13 +47,15 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 app.permanent_session_lifetime = timedelta(days=7)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DEALS_FILE = os.path.join(DATA_DIR, "deals.json")
 MESSAGES_FILE = os.path.join(DATA_DIR, "messages.json")
 GEOCODE_CACHE_FILE = os.path.join(DATA_DIR, "geocode_cache.json")
 PASSWORD_FILE = os.path.join(BASE_DIR, "password.txt")
 SITE_URL = os.environ.get("SITE_URL", "https://github.com/programmingrobot/Feast-Finder")
+RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY", "").strip()
+RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "").strip()
+RECAPTCHA_MIN_SCORE = float(os.environ.get("RECAPTCHA_MIN_SCORE", "0.5"))
 DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 SECTIONS = ["General", "Breakfast", "Lunch", "Dinner"]
 SEARCH_MIN_SCORE = 58
@@ -146,6 +170,48 @@ def check_admin_password(password):
 def set_admin_password(password):
     with open(PASSWORD_FILE, "w", encoding="utf-8") as f:
         f.write(generate_password_hash(password))
+
+def verify_recaptcha(token, remote_ip=None):
+    if not RECAPTCHA_SITE_KEY or not RECAPTCHA_SECRET_KEY:
+        return True
+
+    if not token:
+        return False
+
+    data = {
+        "secret": RECAPTCHA_SECRET_KEY,
+        "response": token
+    }
+    if remote_ip:
+        data["remoteip"] = remote_ip
+
+    payload = urllib_parse.urlencode(data).encode("utf-8")
+    verification_request = urllib_request.Request(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data=payload,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json"
+        }
+    )
+
+    try:
+        with urllib_request.urlopen(verification_request, timeout=5) as response:
+            result = json.load(response)
+    except (urllib_error.URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError):
+        return False
+
+    if not result.get("success"):
+        return False
+
+    if result.get("action") and result.get("action") != "admin_login":
+        return False
+
+    score = result.get("score")
+    try:
+        return score is None or float(score) >= RECAPTCHA_MIN_SCORE
+    except (TypeError, ValueError):
+        return False
 
 def geocode_address(location):
     cache = load_geocode_cache()
@@ -655,15 +721,18 @@ def login():
 
     if request.method == "POST":
         password = request.form.get("password", "")
+        recaptcha_token = request.form.get("g-recaptcha-response", "")
 
-        if check_admin_password(password):
+        if not verify_recaptcha(recaptcha_token, request.remote_addr):
+            error = "reCAPTCHA verification failed. Please try again."
+        elif check_admin_password(password):
             session.permanent = True
             session["admin_logged_in"] = True
             return redirect(url_for("admin_panel"))
+        else:
+            error = "Incorrect password."
 
-        error = "Incorrect password."
-
-    return render_template("login.html", error=error)
+    return render_template("login.html", error=error, recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 @app.route("/logout")
 def logout():

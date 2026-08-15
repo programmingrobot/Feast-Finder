@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Admin Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% if recaptcha_site_key %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}" defer></script>
+    {% endif %}
     <style>
         .login-box {
             max-width: 400px;
@@ -48,11 +51,35 @@
     <div class="error">{{ error }}</div>
     {% endif %}
 
-    <form method="POST">
+    <form method="POST" id="admin-login-form">
         <input type="password" name="password" placeholder="Enter password" required>
+        {% if recaptcha_site_key %}
+        <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+        {% endif %}
         <button type="submit">Login</button>
     </form>
 </div>
+
+{% if recaptcha_site_key %}
+<script>
+    const loginForm = document.getElementById("admin-login-form");
+    const recaptchaToken = document.getElementById("g-recaptcha-response");
+
+    loginForm.addEventListener("submit", function (event) {
+        if (recaptchaToken.value) {
+            return;
+        }
+
+        event.preventDefault();
+        grecaptcha.ready(function () {
+            grecaptcha.execute({{ recaptcha_site_key|tojson }}, { action: "admin_login" }).then(function (token) {
+                recaptchaToken.value = token;
+                loginForm.submit();
+            });
+        });
+    });
+</script>
+{% endif %}
 
 </body>
 </html>
