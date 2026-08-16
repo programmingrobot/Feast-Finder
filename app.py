@@ -180,7 +180,7 @@ def set_admin_password(password):
         f.write(generate_password_hash(password))
 
 def get_client_ip():
-    return request.access_route[0] if request.access_route else (request.remote_addr or "unknown")
+    return request.remote_addr or "unknown"
 
 def get_login_lockout_seconds(client_ip):
     attempt = LOGIN_ATTEMPTS.get(client_ip)
@@ -757,6 +757,7 @@ def robots_txt():
 # LOGIN
 # -----------------------------
 @app.route("/login", methods=["GET", "POST"])
+@block_bots
 def login():
     error = None
 
