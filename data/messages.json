@@ -34,5 +34,15 @@
     "deals": "2 x Deluxe Turkish & 2 Smoothies for only $35",
     "submitted_at": "2026-01-29 08:19",
     "approved": false
+  },
+  {
+    "id": "0642a722-5262-4d46-8f3f-a11a175804f6",
+    "business_name": "Hogs Breath Cafe",
+    "business_address": "128 Argyle St, Traralgon VIC 3844",
+    "business_email": "correction@visitor.local",
+    "deals": "Correction for deal 10: Changed to $8",
+    "submitted_at": "2026-08-10 10:08",
+    "approved": false,
+    "type": "correction"
   }
 ]
